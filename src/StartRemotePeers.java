@@ -1,4 +1,34 @@
+import java.io.*;
+import java.util.*;
+
 public class StartRemotePeers {
+    public Vector<RemotePeerInfo> peerInfoVector;
+
+    public void getConfiguration() {
+        String st;
+        int i1;
+        peerInfoVector = new Vector<RemotePeerInfo>();
+        try {
+            BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
+            while((st = in.readLine()) != null) {
+
+                String[] tokens = st.split("\\s+");
+                //System.out.println("tokens begin ----");
+                //for (int x=0; x<tokens.length; x++) {
+                //    System.out.println(tokens[x]);
+                //}
+                //System.out.println("tokens end ----");
+
+                peerInfoVector.addElement(new RemotePeerInfo(tokens[0], tokens[1], tokens[2]));
+
+            }
+
+            in.close();
+        }
+        catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+    }
     public static void main(String[] args) {
         // From my understanding the first argument is the peerID, which we can see
         // in PeerInfo.cfg as well as page 7 of the project description pdf
@@ -22,5 +52,43 @@ public class StartRemotePeers {
         // PieceSize [int] - Specifies the size of a piece in bytes
         // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
         // TODO: Make some notes and comments on other implementations
+        // Below is some code they gave us that they said should help get started
+        try {
+            StartRemotePeers myStart = new StartRemotePeers();
+            myStart.getConfiguration();
+
+            // get current path
+            String path = System.getProperty("user.dir");
+
+            // start clients at remote hosts
+            for (int i = 0; i < myStart.peerInfoVector.size(); i++) {
+                RemotePeerInfo pInfo = (RemotePeerInfo) myStart.peerInfoVector.elementAt(i);
+
+                System.out.println("Start remote peer " + pInfo.peerId +  " at " + pInfo.peerAddress );
+
+                // *********************** IMPORTANT *************************** //
+                // If your program is JAVA, use this line.
+                Runtime.getRuntime().exec("ssh " + pInfo.peerAddress + " cd " + path + "; java peerProcess " + pInfo.peerId);
+
+                // If your program is C/C++, use this line instead of the above line.
+                //Runtime.getRuntime().exec("ssh " + pInfo.peerAddress + " cd " + path + "; ./peerProcess " + pInfo.peerId);
+            }
+            System.out.println("Starting all remote peers has done." );
+
+        }
+        catch (Exception ex) {
+            System.out.println(ex);
+        }
+    }
+    public static class RemotePeerInfo {
+        public String peerId;
+        public String peerAddress;
+        public String peerPort;
+
+        public RemotePeerInfo(String peerId, String peerAddress, String peerPort) {
+            this.peerId = peerId;
+            this.peerAddress = peerAddress;
+            this.peerPort = peerPort;
+        }
     }
 }
