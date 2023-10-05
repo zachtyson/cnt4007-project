@@ -21,4 +21,20 @@ public class peerProcess {
     // PieceSize [int] - Specifies the size of a piece in bytes
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
+
+    public static void main(String[] args) {
+        // Check for first argument
+        if (args.length < 1) {
+            System.out.println("Error: Missing peer ID argument");
+            System.exit(1);
+        }
+        // Attempt to parse peer ID
+        int peerID = 0;
+        try {
+            peerID = Integer.parseInt(args[0]);
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Peer ID must be an integer");
+            System.exit(1);
+        }
+    }
 }
