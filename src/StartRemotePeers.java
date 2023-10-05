@@ -5,7 +5,6 @@ public class StartRemotePeers {
     public Vector<RemotePeerInfo> peerInfoVector;
     public void getConfiguration() {
         String st;
-        int i1;
         peerInfoVector = new Vector<RemotePeerInfo>();
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
