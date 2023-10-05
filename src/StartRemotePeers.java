@@ -1,4 +1,4 @@
-public class Main {
+public class StartRemotePeers {
     public static void main(String[] args) {
         // From my understanding the first argument is the peerID, which we can see
         // in PeerInfo.cfg as well as page 7 of the project description pdf
