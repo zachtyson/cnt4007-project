@@ -20,6 +20,7 @@ public class StartRemotePeers {
             System.out.println(ex.toString());
         }
     }
+    public List<Process> processes = new ArrayList<>();
     public static void main(String[] args) {
         // From my understanding the first argument is the peerID, which we can see
         // in PeerInfo.cfg as well as page 7 of the project description pdf
@@ -53,7 +54,13 @@ public class StartRemotePeers {
             for (int i = 0; i < myStart.peerInfoVector.size(); i++) {
                 RemotePeerInfo pInfo = myStart.peerInfoVector.elementAt(i);
                 System.out.println("Start remote peer " + pInfo.peerId +  " at " + pInfo.peerAddress );
-                Runtime.getRuntime().exec("ssh " + pInfo.peerAddress + " cd " + path + "; java peerProcess " + pInfo.peerId);
+                // Runtime.getRuntime().exec("ssh " + pInfo.peerAddress + " cd " + path + "; java peerProcess " + pInfo.peerId);
+                // Commenting this out for testing on my local machine
+
+                //Testing code below
+                Process process = getProcess(path, pInfo);
+                getProcessOutput(process, myStart);
+
             }
             System.out.println("Starting all remote peers has done." );
 
@@ -61,6 +68,41 @@ public class StartRemotePeers {
         catch (Exception ex) {
             System.out.println(ex);
         }
+    }
+
+    private static Process getProcess(String path, RemotePeerInfo pInfo) throws IOException {
+        File dir = new File(path +"/local_testing/"+ pInfo.peerId);
+        ProcessBuilder processBuilder = new ProcessBuilder("java", ".\\peerProcess.java", pInfo.peerId);
+        processBuilder.directory(dir);
+        Process process = processBuilder.start();
+        return process;
+    }
+
+    private static void getProcessOutput(Process process,StartRemotePeers myStart) {
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.out.println("Stdout: " + line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getErrorStream()))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                System.err.println("Stderr: " + line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        myStart.processes.add(process);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            myStart.processes.forEach(Process::destroy);
+        }));
     }
 
     public static class RemotePeerInfo {
