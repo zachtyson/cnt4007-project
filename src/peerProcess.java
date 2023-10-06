@@ -41,29 +41,47 @@ public class peerProcess {
             System.exit(1);
         }
         // Read PeerInfo.cfg
-        Vector<RemotePeerInfo> peerInfoVector = new Vector<>();
-        String line;
+        Vector<Peer> peerVector = new Vector<>();
+        String currLine;
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
-            while((line = in.readLine()) != null) {
+            int line = 0;
+            while((currLine = in.readLine()) != null) {
                 // Split line by whitespace
-                String[] tokens = line.split("\\s+");
+                String[] tokens = currLine.split("\\s+");
                 try {
                     // Attempt to parse peer ID
                     int tempPeerID = Integer.parseInt(tokens[0]);
                     if(tempPeerID != peerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerInfoVector.addElement(new RemotePeerInfo(tokens[0], tokens[1], tokens[2]));
+                        peerVector.addElement(new Peer(tempPeerID, tokens[1], tokens[2]));
+                    } else {
+                        // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
+                        // 'before it' is defined as that are already in the vector
+
                     }
                 } catch (NumberFormatException e) {
                     System.out.println("Error: Peer ID must be an integer");
                     System.exit(1);
                 }
+                line++;
             }
             in.close();
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
-
     }
+
+    public static class Peer {
+        public int peerId;
+        public String peerAddress;
+        public String peerPort;
+
+        public Peer(int peerId, String peerAddress, String peerPort) {
+            this.peerId = peerId;
+            this.peerAddress = peerAddress;
+            this.peerPort = peerPort;
+        }
+    }
+
 }
