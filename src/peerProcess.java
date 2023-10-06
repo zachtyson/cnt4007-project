@@ -32,7 +32,27 @@ public class peerProcess {
             System.out.println("Error: Missing peer ID argument");
             System.exit(1);
         }
-        // Attempt to parse peer ID
+        // Attempt to parse peer ID  
+    }
+
+    public static class Peer {
+        public int peerId;
+        public String peerAddress;
+        public int peerPort;
+
+        public Peer(int peerId, String peerAddress, int peerPort) {
+            this.peerId = peerId;
+            this.peerAddress = peerAddress;
+            this.peerPort = peerPort;
+        }
+    }
+
+    //"PeerInfo.cfg"
+    public Vector <Peer> getConfig(String[] args, String FileName){
+          // Read PeerInfo.cfg
+        Vector<Peer> peerVector = new Vector<>();
+        String currLine;
+
         int peerID = 0;
         try {
             peerID = Integer.parseInt(args[0]);
@@ -40,10 +60,9 @@ public class peerProcess {
             System.out.println("Error: Peer ID must be an integer");
             System.exit(1);
         }
-        // Read PeerInfo.cfg
-        Vector<Peer> peerVector = new Vector<>();
-        String currLine;
-        try {
+
+
+      try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             int line = 0;
             while((currLine = in.readLine()) != null) {
@@ -71,18 +90,6 @@ public class peerProcess {
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
+        return peerVector;
     }
-
-    public static class Peer {
-        public int peerId;
-        public String peerAddress;
-        public int peerPort;
-
-        public Peer(int peerId, String peerAddress, int peerPort) {
-            this.peerId = peerId;
-            this.peerAddress = peerAddress;
-            this.peerPort = peerPort;
-        }
-    }
-
 }
