@@ -10,7 +10,7 @@ public class StartRemotePeers {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             while((st = in.readLine()) != null) {
                 String[] tokens = st.split("\\s+");
-                peerInfoVector.addElement(new RemotePeerInfo(tokens[0], tokens[1], tokens[2]));
+                peerInfoVector.addElement(new RemotePeerInfo(tokens[0], tokens[1], tokens[2], tokens[3]));
 
             }
 
@@ -19,6 +19,49 @@ public class StartRemotePeers {
         catch (Exception ex) {
             System.out.println(ex.toString());
         }
+    }
+    public void setUpDevelopment() throws Exception{
+        // This is a method I made to help with testing on my local machine
+        // Basically just sets the local_testing directory to delete all files except 'thefile'
+        // And then copies peerProcess.java to each of the peer directories as well as Common.cfg and PeerInfo.cfg
+        // This way I can run the program on my local machine and test it without having to deal with all the ssh stuff
+        // and manual copying of files
+        // I'm not sure if this is the best way to do this, but it works for now
+        String localTestingDirectory = "local_testing";
+        String[] peerFolders = new String[]{"1001", "1002", "1003", "1004", "1005", "1006", "1007", "1008", "1009"};
+        //Check if the local_testing directory exists
+        File localTestingDir = new File(localTestingDirectory);
+        if(!localTestingDir.exists() || !localTestingDir.isDirectory()) {
+            // If it doesn't exist, create it
+            localTestingDir.mkdir();
+        }
+        for (String peerFolder : peerFolders) {
+            File peerFolderFile = new File(localTestingDir, peerFolder);
+            if (!peerFolderFile.exists() || !peerFolderFile.isDirectory()) {
+                // Check if folder exists, if not create it
+                // I don't think the second check is necessary, since I can't see a scenario where a file would be
+                // named '1006' or something with no extension, but I'm not sure
+                peerFolderFile.mkdir();
+            }
+        }
+        // Iterate over peerInfoVector and check if the peer has the file
+        // If it does, copy the file to the peer's directory
+        // If it doesn't, delete all files except 'thefile' from the peer's directory
+        String path = System.getProperty("user.dir");
+        for (RemotePeerInfo peerInfo : peerInfoVector) {
+            //Delete all files except 'thefile'
+            File peerFolderFile = new File(localTestingDir, peerInfo.peerId);
+            File[] files = peerFolderFile.listFiles();
+            if(files != null) {
+                for (File file : files) {
+                    if (!file.getName().equals("thefile")) {
+                        file.delete();
+                    }
+                }
+            }
+        }
+
+
     }
     public List<Process> processes = new ArrayList<>();
     public static void main(String[] args) {
@@ -48,6 +91,7 @@ public class StartRemotePeers {
         try {
             StartRemotePeers myStart = new StartRemotePeers();
             myStart.getConfiguration();
+            myStart.setUpDevelopment();
             // get current path
             String path = System.getProperty("user.dir");
             // start clients at remote hosts
@@ -110,10 +154,13 @@ public class StartRemotePeers {
         public String peerAddress;
         public String peerPort;
 
-        public RemotePeerInfo(String peerId, String peerAddress, String peerPort) {
+        public boolean hasFileOnStart;
+
+        public RemotePeerInfo(String peerId, String peerAddress, String peerPort, String hasFileOnStart) {
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
+            this.hasFileOnStart = !hasFileOnStart.equals("0");
         }
     }
 
