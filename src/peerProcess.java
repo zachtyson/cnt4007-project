@@ -52,9 +52,10 @@ public class peerProcess {
                 try {
                     // Attempt to parse peer ID
                     int tempPeerID = Integer.parseInt(tokens[0]);
+                    int peerPort = Integer.parseInt(tokens[2]);
                     if(tempPeerID != peerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerVector.addElement(new Peer(tempPeerID, tokens[1], tokens[2]));
+                        peerVector.addElement(new Peer(tempPeerID, tokens[1], peerPort));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
@@ -75,9 +76,9 @@ public class peerProcess {
     public static class Peer {
         public int peerId;
         public String peerAddress;
-        public String peerPort;
+        public int peerPort;
 
-        public Peer(int peerId, String peerAddress, String peerPort) {
+        public Peer(int peerId, String peerAddress, int peerPort) {
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
