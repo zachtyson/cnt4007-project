@@ -51,59 +51,35 @@ public class StartRemotePeers {
         // If it doesn't, delete all files except 'thefile' from the peer's directory
         String path = System.getProperty("user.dir");
         for (RemotePeerInfo peerInfo : peerInfoVector) {
-            //Delete all files except 'thefile'
+            //Delete all files that could be in the peer's directory
             File peerFolderFile = new File(localTestingDir, peerInfo.peerId);
             File[] files = peerFolderFile.listFiles();
             if(files != null) {
                 for (File file : files) {
-                    if (!file.getName().equals("thefile") || !peerInfo.hasFileOnStart) {
-                        file.delete();
-                    }
+                    file.delete();
                 }
+            }
+            copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg", peerInfo);
+            copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg", peerInfo);
+            copyFile(path+"\\src", peerFolderFile.getAbsolutePath(), "peerProcess.java", peerInfo);
+            if(peerInfo.hasFileOnStart) {
+                copyFile(path, peerFolderFile.getAbsolutePath(), "thefile", peerInfo);
             }
 
-            String[] filesToCopy = {"Common.cfg", "PeerInfo.cfg"};
-            for (String fileName : filesToCopy) {
-                File sourceFile = new File(path, fileName);
-                File destinationFile = new File(peerFolderFile, fileName);
-                try {
-                    Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    if(peerInfo.hasFileOnStart) {
-                        // If the peer has the file, copy it to the peer's directory
-                        File sourceFile2 = new File(path, "thefile");
-                        File destinationFile2 = new File(peerFolderFile, "thefile");
-                        try {
-                            Files.copy(sourceFile2.toPath(), destinationFile2.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            File sourceFile = new File(path+"\\src", "peerProcess.java");
-            File destinationFile = new File(peerFolderFile, "peerProcess.java");
-            try {
-                Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                if(peerInfo.hasFileOnStart) {
-                    // If the peer has the file, copy it to the peer's directory
-                    File sourceFile2 = new File(path, "thefile");
-                    File destinationFile2 = new File(peerFolderFile, "thefile");
-                    try {
-                        Files.copy(sourceFile2.toPath(), destinationFile2.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
-
-
-
     }
+
+    public static void copyFile(String sourcePath, String destinationPath,
+                                String fileName, RemotePeerInfo peerInfo) {
+        File sourceFile = new File(sourcePath, fileName);
+        File destinationFile = new File(destinationPath, fileName);
+        try {
+            Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public List<Process> processes = new ArrayList<>();
     public static void main(String[] args) {
         // From my understanding the first argument is the peerID, which we can see
