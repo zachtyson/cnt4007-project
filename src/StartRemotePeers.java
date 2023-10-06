@@ -1,4 +1,6 @@
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class StartRemotePeers {
@@ -54,12 +56,51 @@ public class StartRemotePeers {
             File[] files = peerFolderFile.listFiles();
             if(files != null) {
                 for (File file : files) {
-                    if (!file.getName().equals("thefile")) {
+                    if (!file.getName().equals("thefile") || !peerInfo.hasFileOnStart) {
                         file.delete();
                     }
                 }
             }
+
+            String[] filesToCopy = {"Common.cfg", "PeerInfo.cfg"};
+            for (String fileName : filesToCopy) {
+                File sourceFile = new File(path, fileName);
+                File destinationFile = new File(peerFolderFile, fileName);
+                try {
+                    Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    if(peerInfo.hasFileOnStart) {
+                        // If the peer has the file, copy it to the peer's directory
+                        File sourceFile2 = new File(path, "thefile");
+                        File destinationFile2 = new File(peerFolderFile, "thefile");
+                        try {
+                            Files.copy(sourceFile2.toPath(), destinationFile2.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            File sourceFile = new File(path+"\\src", "peerProcess.java");
+            File destinationFile = new File(peerFolderFile, "peerProcess.java");
+            try {
+                Files.copy(sourceFile.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                if(peerInfo.hasFileOnStart) {
+                    // If the peer has the file, copy it to the peer's directory
+                    File sourceFile2 = new File(path, "thefile");
+                    File destinationFile2 = new File(peerFolderFile, "thefile");
+                    try {
+                        Files.copy(sourceFile2.toPath(), destinationFile2.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
 
 
     }

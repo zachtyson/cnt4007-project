@@ -32,7 +32,7 @@ public class peerProcess {
             System.out.println("Error: Missing peer ID argument");
             System.exit(1);
         }
-        // Attempt to parse peer ID  
+        // Attempt to parse peer ID
     }
 
     public static class Peer {
