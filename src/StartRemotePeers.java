@@ -51,7 +51,7 @@ public class StartRemotePeers {
             String path = System.getProperty("user.dir");
             // start clients at remote hosts
             for (int i = 0; i < myStart.peerInfoVector.size(); i++) {
-                RemotePeerInfo pInfo = (RemotePeerInfo) myStart.peerInfoVector.elementAt(i);
+                RemotePeerInfo pInfo = myStart.peerInfoVector.elementAt(i);
                 System.out.println("Start remote peer " + pInfo.peerId +  " at " + pInfo.peerAddress );
                 Runtime.getRuntime().exec("ssh " + pInfo.peerAddress + " cd " + path + "; java peerProcess " + pInfo.peerId);
             }
@@ -60,17 +60,6 @@ public class StartRemotePeers {
         }
         catch (Exception ex) {
             System.out.println(ex);
-        }
-    }
-    public static class RemotePeerInfo {
-        public String peerId;
-        public String peerAddress;
-        public String peerPort;
-
-        public RemotePeerInfo(String peerId, String peerAddress, String peerPort) {
-            this.peerId = peerId;
-            this.peerAddress = peerAddress;
-            this.peerPort = peerPort;
         }
     }
 }
