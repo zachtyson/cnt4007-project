@@ -1,3 +1,7 @@
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.Vector;
+
 public class peerProcess {
     // From my understanding the first argument is the peerID, which we can see
     // in PeerInfo.cfg as well as page 7 of the project description pdf
@@ -36,5 +40,30 @@ public class peerProcess {
             System.out.println("Error: Peer ID must be an integer");
             System.exit(1);
         }
+        // Read PeerInfo.cfg
+        Vector<RemotePeerInfo> peerInfoVector = new Vector<>();
+        String line;
+        try {
+            BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
+            while((line = in.readLine()) != null) {
+                // Split line by whitespace
+                String[] tokens = line.split("\\s+");
+                try {
+                    // Attempt to parse peer ID
+                    int tempPeerID = Integer.parseInt(tokens[0]);
+                    if(tempPeerID != peerID) {
+                        // If peer ID is not the same as the current peer, add it to the vector
+                        peerInfoVector.addElement(new RemotePeerInfo(tokens[0], tokens[1], tokens[2]));
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Error: Peer ID must be an integer");
+                    System.exit(1);
+                }
+            }
+            in.close();
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
+
     }
 }
