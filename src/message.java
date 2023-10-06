@@ -29,9 +29,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 
 
    //overloaded constructors for message class
-    public message(msgType Msg, Byte[] payload, String messagepayload, int payloadlength){
+   // makes payload
+    public message(msgType Msg, String messagepayload, int payloadlength){
         this.Msg = Msg;
-        this.payload = payload;
         this.messagepayload = messagepayload;
         this.payloadlength = payloadlength;
     
@@ -41,6 +41,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         this.payload = payload;
       
     }
+    // makes rest
     public message(Byte[] payload){
         this.payload = payload;
         msgInterpret();
@@ -156,3 +157,4 @@ payload with variable size.
  */
 
 
+// NEXT STEP: create a flipped version of the interpreter to convert information to bitwise to be sent. 
