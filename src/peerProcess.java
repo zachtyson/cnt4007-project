@@ -47,9 +47,7 @@ public class peerProcess {
         peerProcess currentPeer = new peerProcess();
         currentPeer.currentPeerID = ID;
         currentPeer.peerVector = currentPeer.getPeers();
-        System.out.println("Peer ID: " + currentPeer.currentPeerID);
-        System.out.println("Peer Vector Length: " + currentPeer.peerVector.size());
-
+        currentPeer.getCommon();
     }
 
     public int currentPeerID;
@@ -108,5 +106,42 @@ public class peerProcess {
             System.out.println(ex.toString());
         }
         return peerVector;
+    }
+
+    private void getCommon() {
+        String currLine;
+        try {
+            BufferedReader in = new BufferedReader(new FileReader("Common.cfg"));
+            while((currLine = in.readLine()) != null) {
+                // Split line by whitespace
+                String[] tokens = currLine.split("\\s+",2);
+                if(tokens.length != 2) {
+                    // System.out.println("Error: Common.cfg must have 2 fields per line");
+                    // System.exit(1);
+                    // Not sure if to exit or just continue, but there is an invalid line in the file
+                    continue;
+                }
+                String key = tokens[0];
+                String value = tokens[1];
+                switch (key) {
+                    case "NumberOfPreferredNeighbors" -> numberOfPreferredNeighbors = Integer.parseInt(value);
+                    case "UnchokingInterval" -> unchokingInterval = Integer.parseInt(value);
+                    case "OptimisticUnchokingInterval" -> optimisticUnchokingInterval = Integer.parseInt(value);
+                    case "FileName" -> fileName = value;
+                    case "FileSize" -> fileSize = Integer.parseInt(value);
+                    case "PieceSize" -> pieceSize = Integer.parseInt(value);
+                    default -> {
+                        System.out.println("Unknown key in config file: " + key);
+                        System.exit(1);
+                    }
+                }
+            }
+            in.close();
+        } catch (NumberFormatException e) {
+            System.out.println("Error: Value must be an integer");
+            System.exit(1);
+        } catch (Exception ex) {
+            System.out.println(ex.toString());
+        }
     }
 }
