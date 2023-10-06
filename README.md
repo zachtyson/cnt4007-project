@@ -22,7 +22,7 @@ A Peer-to-Peer (P2P) file-sharing system implementation guide based on the BitTo
 - Acquire knowledge of vital networking concepts (sockets, IP addresses, ports)
 
 ### Setting Up the Development Environment
-- Choose a development language: Java or C/C++
+- Choose a development language: **Java** or C/C++
 - Setup necessary libraries and dependencies (networking, file I/O, threading)
 
 ### Designing the Architecture
