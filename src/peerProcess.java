@@ -64,8 +64,8 @@ public class peerProcess {
         public int peerId;
         public String peerAddress;
         public int peerPort;
-
         private Socket socket;
+        private Thread connectionThread;
 
         public Peer(int peerId, String peerAddress, int peerPort) {
             this.peerId = peerId;
@@ -79,6 +79,10 @@ public class peerProcess {
 
         public Thread waitForConnection() {
             return null;
+        }
+
+        public Thread getConnectionThread() {
+            return connectionThread;
         }
     }
 
