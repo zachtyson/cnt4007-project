@@ -157,7 +157,8 @@ public class peerProcess {
         public String peerAddress;
         public int peerPort;
         private Socket socket;
-        private Thread connectionThread;
+        private Thread sendingThread;
+        private Thread receivingThread;
 
         public Peer(int peerId, String peerAddress, int peerPort) {
             this.peerId = peerId;
@@ -168,6 +169,7 @@ public class peerProcess {
         public void connectToPeer(Peer currentPeer) {
             //Creates a thread that attempts to connect to the peer
             System.out.println("Attempting to connect to peer " + peerId + " at " + peerAddress + ":" + peerPort);
+
         }
 
         public Thread waitForConnection() {
@@ -188,21 +190,34 @@ public class peerProcess {
                 }
             }
 
-            // Interrupt the thread
-            if (connectionThread != null && connectionThread.isAlive()) {
+            // Interrupt the threads
+            if (sendingThread != null && sendingThread.isAlive()) {
                 try {
-                    connectionThread.interrupt();
-                    connectionThread.join(); // Ensures that the thread fully terminates before proceeding
-                    System.out.println("Thread for peer " + peerId + " interrupted and joined");
+                    sendingThread.interrupt();
+                    sendingThread.join();
+                    System.out.println("Sending thread for peer " + peerId + " interrupted and joined");
                 } catch (InterruptedException e) {
-                    System.err.println("Error interrupting/joining thread for peer " + peerId + ": " + e.getMessage());
+                    System.err.println("Error interrupting/joining sending thread for peer " + peerId + ": " + e.getMessage());
                 }
             }
+            if (receivingThread != null && receivingThread.isAlive()) {
+                try {
+                    receivingThread.interrupt();
+                    receivingThread.join();
+                    System.out.println("Receiving thread for peer " + peerId + " interrupted and joined");
+                } catch (InterruptedException e) {
+                    System.err.println("Error interrupting/joining receiving thread for peer " + peerId + ": " + e.getMessage());
+                }
+            }
+
         }
 
+        public Thread getSendingThread() {
+            return sendingThread;
+        }
 
-        public Thread getConnectionThread() {
-            return connectionThread;
+        public Thread getReceivingThread() {
+            return receivingThread;
         }
     }
 
