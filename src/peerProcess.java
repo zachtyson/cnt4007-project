@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.Socket;
 import java.util.Vector;
 
@@ -45,7 +46,8 @@ public class peerProcess {
             System.out.println("Error: Peer ID must be an integer");
             System.exit(1);
         }
-        peerProcess currentPeer = new peerProcess(ID);
+        peerProcess currentPeerProcess = new peerProcess(ID);
+        currentPeerProcess.close();
     }
 
     public peerProcess(int currentPeerID) {
@@ -75,7 +77,7 @@ public class peerProcess {
         }
 
         public void connectToPeer(Peer currentPeer) {
-            //Attempts to connect to the peer using the current peer's information
+            //Creates a thread that attempts to connect to the peer
             System.out.println("Attempting to connect to peer " + peerId + " at " + peerAddress + ":" + peerPort);
         }
 
@@ -85,9 +87,42 @@ public class peerProcess {
             return null;
         }
 
+        // Prepares the peer to be closed for the program to terminate
+        public void close() {
+            // Close the socket
+            if (socket != null && !socket.isClosed()) {
+                try {
+                    socket.close();
+                    System.out.println("Socket to peer " + peerId + " closed");
+                } catch (IOException e) {
+                    System.err.println("Error closing socket to peer " + peerId + ": " + e.getMessage());
+                }
+            }
+
+            // Interrupt the thread
+            if (connectionThread != null && connectionThread.isAlive()) {
+                try {
+                    connectionThread.interrupt();
+                    connectionThread.join(); // Ensures that the thread fully terminates before proceeding
+                    System.out.println("Thread for peer " + peerId + " interrupted and joined");
+                } catch (InterruptedException e) {
+                    System.err.println("Error interrupting/joining thread for peer " + peerId + ": " + e.getMessage());
+                }
+            }
+        }
+
+
         public Thread getConnectionThread() {
             return connectionThread;
         }
+    }
+
+    public void close() {
+        // Close all connections
+        for(Peer peer : peerVector) {
+            peer.close();
+        }
+        this.currentPeer.close();
     }
 
     //"PeerInfo.cfg"
