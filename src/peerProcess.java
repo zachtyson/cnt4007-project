@@ -95,7 +95,7 @@ public class peerProcess {
 
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
-            int line = 0;
+            boolean foundCurrentPeer = false;
             while((currLine = in.readLine()) != null) {
                 // Split line by whitespace
                 String[] tokens = currLine.split("\\s+");
@@ -106,16 +106,24 @@ public class peerProcess {
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
                         peerVector.addElement(new Peer(tempPeerID, tokens[1], peerPort));
+                        if(foundCurrentPeer) {
+                            // If current peer has already been found, connect to the peer
+                            peerVector.lastElement().waitForConnection();
+                        }
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
-
+                        this.currentPeer = new Peer(tempPeerID, tokens[1], peerPort);
+                        for(Peer peer : peerVector) {
+                            peer.connectToPeer(this.currentPeer);
+                        }
+                        foundCurrentPeer = true;
                     }
+                    //Code above tries to connect to any peers before it, and any peers after it will connect to it
                 } catch (NumberFormatException e) {
                     System.out.println("Error: Peer ID must be an integer");
                     System.exit(1);
                 }
-                line++;
             }
             in.close();
         } catch (Exception ex) {
