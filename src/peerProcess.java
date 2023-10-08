@@ -48,13 +48,11 @@ public class peerProcess {
         peerProcess currentPeer = new peerProcess(ID);
     }
 
-    public peerProcess(int peerID) {
-        this.currentPeerID = peerID;
-        this.peerVector = getPeers();
+    public peerProcess(int currentPeerID) {
+        this.peerVector = getPeers(currentPeerID);
         getCommon();
     }
-
-    public int currentPeerID;
+    public Peer currentPeer;
     public int unchokingInterval;
     public int optimisticUnchokingInterval;
     public String fileName;
@@ -90,7 +88,7 @@ public class peerProcess {
     }
 
     //"PeerInfo.cfg"
-    public Vector <Peer> getPeers(){
+    public Vector <Peer> getPeers(int currentPeerID){
         // Read PeerInfo.cfg
         Vector<Peer> peerVector = new Vector<>();
         String currLine;
@@ -105,7 +103,7 @@ public class peerProcess {
                     // Attempt to parse peer ID
                     int tempPeerID = Integer.parseInt(tokens[0]);
                     int peerPort = Integer.parseInt(tokens[2]);
-                    if(tempPeerID != this.currentPeerID) {
+                    if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
                         peerVector.addElement(new Peer(tempPeerID, tokens[1], peerPort));
                     } else {
