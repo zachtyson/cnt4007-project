@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.net.Socket;
 import java.util.Vector;
 
 public class peerProcess {
@@ -63,6 +64,8 @@ public class peerProcess {
         public int peerId;
         public String peerAddress;
         public int peerPort;
+
+        private Socket socket;
 
         public Peer(int peerId, String peerAddress, int peerPort) {
             this.peerId = peerId;
