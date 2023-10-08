@@ -72,6 +72,14 @@ public class peerProcess {
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
         }
+
+        public void connectToPeer(Peer otherPeer) {
+
+        }
+
+        public Thread waitForConnection() {
+            return null;
+        }
     }
 
     //"PeerInfo.cfg"
