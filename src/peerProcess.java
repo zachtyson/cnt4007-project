@@ -63,60 +63,6 @@ public class peerProcess {
     public int numberOfPreferredNeighbors;
     public Vector<Peer> peerVector;
 
-    public static class Peer {
-        public int peerId;
-        public String peerAddress;
-        public int peerPort;
-        private Socket socket;
-        private Thread connectionThread;
-
-        public Peer(int peerId, String peerAddress, int peerPort) {
-            this.peerId = peerId;
-            this.peerAddress = peerAddress;
-            this.peerPort = peerPort;
-        }
-
-        public void connectToPeer(Peer currentPeer) {
-            //Creates a thread that attempts to connect to the peer
-            System.out.println("Attempting to connect to peer " + peerId + " at " + peerAddress + ":" + peerPort);
-        }
-
-        public Thread waitForConnection() {
-            //Creates a thread that waits for a connection from the peer
-            System.out.println("Waiting for connection from peer " + peerId + " at " + peerAddress + ":" + peerPort);
-            return null;
-        }
-
-        // Prepares the peer to be closed for the program to terminate
-        public void close() {
-            // Close the socket
-            if (socket != null && !socket.isClosed()) {
-                try {
-                    socket.close();
-                    System.out.println("Socket to peer " + peerId + " closed");
-                } catch (IOException e) {
-                    System.err.println("Error closing socket to peer " + peerId + ": " + e.getMessage());
-                }
-            }
-
-            // Interrupt the thread
-            if (connectionThread != null && connectionThread.isAlive()) {
-                try {
-                    connectionThread.interrupt();
-                    connectionThread.join(); // Ensures that the thread fully terminates before proceeding
-                    System.out.println("Thread for peer " + peerId + " interrupted and joined");
-                } catch (InterruptedException e) {
-                    System.err.println("Error interrupting/joining thread for peer " + peerId + ": " + e.getMessage());
-                }
-            }
-        }
-
-
-        public Thread getConnectionThread() {
-            return connectionThread;
-        }
-    }
-
     public void close() {
         // Close all connections
         for(Peer peer : peerVector) {
@@ -206,4 +152,58 @@ public class peerProcess {
             System.out.println(ex.toString());
         }
     }
+    public static class Peer {
+        public int peerId;
+        public String peerAddress;
+        public int peerPort;
+        private Socket socket;
+        private Thread connectionThread;
+
+        public Peer(int peerId, String peerAddress, int peerPort) {
+            this.peerId = peerId;
+            this.peerAddress = peerAddress;
+            this.peerPort = peerPort;
+        }
+
+        public void connectToPeer(Peer currentPeer) {
+            //Creates a thread that attempts to connect to the peer
+            System.out.println("Attempting to connect to peer " + peerId + " at " + peerAddress + ":" + peerPort);
+        }
+
+        public Thread waitForConnection() {
+            //Creates a thread that waits for a connection from the peer
+            System.out.println("Waiting for connection from peer " + peerId + " at " + peerAddress + ":" + peerPort);
+            return null;
+        }
+
+        // Prepares the peer to be closed for the program to terminate
+        public void close() {
+            // Close the socket
+            if (socket != null && !socket.isClosed()) {
+                try {
+                    socket.close();
+                    System.out.println("Socket to peer " + peerId + " closed");
+                } catch (IOException e) {
+                    System.err.println("Error closing socket to peer " + peerId + ": " + e.getMessage());
+                }
+            }
+
+            // Interrupt the thread
+            if (connectionThread != null && connectionThread.isAlive()) {
+                try {
+                    connectionThread.interrupt();
+                    connectionThread.join(); // Ensures that the thread fully terminates before proceeding
+                    System.out.println("Thread for peer " + peerId + " interrupted and joined");
+                } catch (InterruptedException e) {
+                    System.err.println("Error interrupting/joining thread for peer " + peerId + ": " + e.getMessage());
+                }
+            }
+        }
+
+
+        public Thread getConnectionThread() {
+            return connectionThread;
+        }
+    }
+
 }
