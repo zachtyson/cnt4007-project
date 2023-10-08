@@ -45,10 +45,13 @@ public class peerProcess {
             System.out.println("Error: Peer ID must be an integer");
             System.exit(1);
         }
-        peerProcess currentPeer = new peerProcess();
-        currentPeer.currentPeerID = ID;
-        currentPeer.peerVector = currentPeer.getPeers();
-        currentPeer.getCommon();
+        peerProcess currentPeer = new peerProcess(ID);
+    }
+
+    public peerProcess(int peerID) {
+        this.currentPeerID = peerID;
+        this.peerVector = getPeers();
+        getCommon();
     }
 
     public int currentPeerID;
