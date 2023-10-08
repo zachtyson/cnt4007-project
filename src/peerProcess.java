@@ -74,11 +74,14 @@ public class peerProcess {
             this.peerPort = peerPort;
         }
 
-        public void connectToPeer(Peer otherPeer) {
-
+        public void connectToPeer(Peer currentPeer) {
+            //Attempts to connect to the peer using the current peer's information
+            System.out.println("Attempting to connect to peer " + peerId + " at " + peerAddress + ":" + peerPort);
         }
 
         public Thread waitForConnection() {
+            //Creates a thread that waits for a connection from the peer
+            System.out.println("Waiting for connection from peer " + peerId + " at " + peerAddress + ":" + peerPort);
             return null;
         }
 
