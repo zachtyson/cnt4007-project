@@ -3,6 +3,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+
 public class StartRemotePeers {
     public Vector<RemotePeerInfo> peerInfoVector;
     public void getConfiguration() {
@@ -61,7 +62,7 @@ public class StartRemotePeers {
             }
             copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg", peerInfo);
             copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg", peerInfo);
-            copyFile(path+"\\src", peerFolderFile.getAbsolutePath(), "peerProcess.java", peerInfo);
+            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "peerProcess.java", peerInfo);
             if(peerInfo.hasFileOnStart) {
                 copyFile(path, peerFolderFile.getAbsolutePath(), "thefile", peerInfo);
             }
@@ -109,7 +110,7 @@ public class StartRemotePeers {
 
     private static Process getProcess(String path, RemotePeerInfo pInfo) throws IOException {
         File dir = new File(path +"/local_testing/"+ pInfo.peerId);
-        ProcessBuilder processBuilder = new ProcessBuilder("java", ".\\peerProcess.java", pInfo.peerId);
+        ProcessBuilder processBuilder = new ProcessBuilder("java", "peerProcess.java", pInfo.peerId);
         processBuilder.directory(dir);
         Process process = processBuilder.start();
         return process;
