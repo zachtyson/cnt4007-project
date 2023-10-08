@@ -91,7 +91,7 @@ public class StartRemotePeers {
             // start clients at remote hosts
             for (int i = 0; i < myStart.peerInfoVector.size(); i++) {
                 RemotePeerInfo pInfo = myStart.peerInfoVector.elementAt(i);
-                System.out.println("Start remote peer " + pInfo.peerId +  " at " + pInfo.peerAddress );
+                System.out.println("Start remote peer " + pInfo.peerId +  " at " + pInfo.peerAddress + " on port " + pInfo.peerPort + " hasFile " + pInfo.hasFileOnStart);
                 // Runtime.getRuntime().exec("ssh " + pInfo.peerAddress + " cd " + path + "; java peerProcess " + pInfo.peerId);
                 // Commenting this out for testing on my local machine
                 //Testing code below
