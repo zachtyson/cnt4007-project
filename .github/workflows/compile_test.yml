@@ -1,0 +1,35 @@
+name: Java CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 19
+        uses: actions/setup-java@v2
+        with:
+          java-version: '19'
+          distribution: 'adopt'
+
+      - name: Copy config file
+        run: |
+          mkdir action_folder
+          mkdir action_folder/src
+          cp ./PeerInfo.cfg ./action_folder/PeerInfo.cfg
+          cp ./Common.cfg ./action_folder/Common.cfg
+          cp ./thefile ./action_folder/thefile
+          cp ./src/StartRemotePeers.java ./action_folder/StartRemotePeers.java
+          cp ./src/peerProcess.java ./action_folder/src/peerProcess.java
+          cp ./src/message.java ./action_folder/src/message.java
+
+      - name: Run
+        run: cd action_folder && java StartRemotePeers.java
