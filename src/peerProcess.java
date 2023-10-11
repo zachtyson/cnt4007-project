@@ -193,6 +193,29 @@ public class peerProcess {
             }
         }
 
+        public String generateHandshake() {
+            String handshake = "P2PFILESHARINGPROJ";
+            handshake += "0000000000";
+            handshake += this.currentPeer.peerId;
+            return handshake;
+        }
+
+        public boolean checkHandshake(String handshake) {
+            System.out.println(handshake);
+            if(handshake.length() != 32) {
+                return false;
+            }
+            if(!handshake.substring(0, 18).equals("P2PFILESHARINGPROJ")) {
+                return false;
+            }
+            if(!handshake.substring(18, 28).equals("0000000000")) {
+                return false;
+            }
+            System.out.println(handshake.substring(28));
+            System.out.println(Integer.toString(this.peerId));
+            return handshake.substring(28).equals(Integer.toString(this.peerId));
+        }
+
         public void server() {
             try (ServerSocket serverSocket = new ServerSocket(this.currentPeer.peerPort)) {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
@@ -201,6 +224,13 @@ public class peerProcess {
 
                 in = new ObjectInputStream(socket.getInputStream());
                 out = new ObjectOutputStream(socket.getOutputStream());
+                inputMessage = generateHandshake();
+                sendMessage(inputMessage);
+                outputMessage = (String) in.readObject();
+                if(!checkHandshake(outputMessage)) {
+                    System.out.println("Handshake failed");
+                    System.exit(1);
+                }
 
                 while (true) {
                     try {
@@ -246,6 +276,13 @@ public class peerProcess {
                     out = new ObjectOutputStream(socket.getOutputStream());
                     out.flush();
                     in = new ObjectInputStream(socket.getInputStream());
+                    inputMessage = generateHandshake();
+                    sendMessage(inputMessage);
+                    outputMessage = (String) in.readObject();
+                    if(!checkHandshake(outputMessage)) {
+                        System.out.println("Handshake failed");
+                        System.exit(1);
+                    }
                     do {
                         try {
                             Thread.sleep(1000);
