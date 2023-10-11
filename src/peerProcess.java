@@ -246,7 +246,7 @@ public class peerProcess {
                     out = new ObjectOutputStream(socket.getOutputStream());
                     out.flush();
                     in = new ObjectInputStream(socket.getInputStream());
-                    while(true) {
+                    do {
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
@@ -257,14 +257,11 @@ public class peerProcess {
                         //Send the sentence to the server
                         sendMessage(inputMessage);
                         //Receive the upperCase sentence from the server
-                        outputMessage = (String)in.readObject();
+                        outputMessage = (String) in.readObject();
                         //show the message to the user
                         System.out.println("Receive message: " + outputMessage);
                         messageNumber++;
-                        if(messageNumber > 10) {
-                            break;
-                        }
-                    }
+                    } while (messageNumber <= 10);
 
                 }
                 catch (ConnectException e) {
