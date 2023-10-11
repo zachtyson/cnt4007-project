@@ -298,11 +298,6 @@ public class peerProcess {
             System.err.println("Maximum number of attempts reached. Exiting client.");
         }
 
-        public Thread waitForConnection() {
-            //Creates a thread that waits for a connection from the peer
-            System.out.println("Waiting for connection from peer " + peerId + " at " + peerAddress + ":" + peerPort);
-            return null;
-        }
 
         // Prepares the peer to be closed for the program to terminate
         public void close() {
