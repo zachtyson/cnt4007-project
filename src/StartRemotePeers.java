@@ -116,32 +116,40 @@ public class StartRemotePeers {
         return process;
     }
 
-    private static void getProcessOutput(Process process,StartRemotePeers myStart) {
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.out.println("Stdout: " + line);
+    private static void getProcessOutput(Process process, StartRemotePeers myStart) {
+        Thread outputThread = new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("Stdout: " + line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getErrorStream()))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                System.err.println("Stderr: " + line);
+        Thread errorThread = new Thread(() -> {
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getErrorStream()))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.err.println("Stderr: " + line);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
+
+        outputThread.start();
+        errorThread.start();
+
         myStart.processes.add(process);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             myStart.processes.forEach(Process::destroy);
         }));
     }
+
 
     public static class RemotePeerInfo {
         public String peerId;

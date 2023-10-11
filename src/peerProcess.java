@@ -1,7 +1,5 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 import java.util.Vector;
 
 public class peerProcess {
@@ -52,6 +50,11 @@ public class peerProcess {
 
     public peerProcess(int currentPeerID) {
         this.peerVector = getPeers(currentPeerID);
+        System.out.println("Peer " + currentPeerID + " has the following peers:");
+        for(Peer peer : peerVector) {
+            System.out.println("Peer " + peer.peerId + " at " + peer.peerAddress + ":" + peer.peerPort);
+            peer.start();
+        }
         getCommon();
     }
     public Peer currentPeer;
@@ -68,7 +71,9 @@ public class peerProcess {
         for(Peer peer : peerVector) {
             peer.close();
         }
-        this.currentPeer.close();
+        if(this.currentPeer != null) {
+            this.currentPeer.close();
+        }
     }
 
     //"PeerInfo.cfg"
@@ -89,19 +94,15 @@ public class peerProcess {
                     int peerPort = Integer.parseInt(tokens[2]);
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerVector.addElement(new Peer(tempPeerID, tokens[1], peerPort));
-                        if(foundCurrentPeer) {
-                            // If current peer has already been found, connect to the peer
-                            peerVector.lastElement().waitForConnection();
-                        }
+                        peerVector.addElement(new Peer(tempPeerID, tokens[1], peerPort, this.currentPeer, !foundCurrentPeer));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
-                        this.currentPeer = new Peer(tempPeerID, tokens[1], peerPort);
-                        for(Peer peer : peerVector) {
-                            peer.connectToPeer(this.currentPeer);
-                        }
+                        this.currentPeer = new Peer(tempPeerID, tokens[1], peerPort, null, !foundCurrentPeer);
                         foundCurrentPeer = true;
+                        for(Peer peer : peerVector) {
+                            peer.currentPeer = this.currentPeer;
+                        }
                     }
                     //Code above tries to connect to any peers before it, and any peers after it will connect to it
                 } catch (NumberFormatException e) {
@@ -152,35 +153,155 @@ public class peerProcess {
             System.out.println(ex.toString());
         }
     }
-    public static class Peer {
+    public static class Peer extends Thread{
         public int peerId;
         public String peerAddress;
         public int peerPort;
         private Socket socket;
-        private Thread sendingThread;
-        private Thread receivingThread;
+        ObjectOutputStream out;
+        ObjectInputStream in;
+        String inputMessage;
+        String outputMessage;
+        boolean client;
+        Peer currentPeer;
 
-        public Peer(int peerId, String peerAddress, int peerPort) {
+        public Peer(int peerId, String peerAddress, int peerPort, Peer currentPeer, boolean client) {
+            super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
+            this.client = client;
+            this.currentPeer = currentPeer;
         }
 
-        public void connectToPeer(Peer currentPeer) {
-            //Creates a thread that attempts to connect to the peer
-            System.out.println("Attempting to connect to peer " + peerId + " at " + peerAddress + ":" + peerPort);
-
+        void sendMessage(String msg) {
+            try {
+                //stream write the message
+                out.writeObject(msg);
+                out.flush();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+        @Override
+        public void run() {
+            if(client) {
+                client();
+            }
+            else {
+                server();
+            }
         }
 
-        public Thread waitForConnection() {
-            //Creates a thread that waits for a connection from the peer
-            System.out.println("Waiting for connection from peer " + peerId + " at " + peerAddress + ":" + peerPort);
-            return null;
+        public void server() {
+            try (ServerSocket serverSocket = new ServerSocket(this.currentPeer.peerPort)) {
+                System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
+                socket = serverSocket.accept();
+                System.out.println("Connected to " + socket.getRemoteSocketAddress());
+
+                in = new ObjectInputStream(socket.getInputStream());
+                out = new ObjectOutputStream(socket.getOutputStream());
+
+                while (true) {
+                    try {
+                        inputMessage = (String) in.readObject();
+                        System.out.println("Received: " + inputMessage);
+
+                        outputMessage = "Acknowledged: " + inputMessage;
+                        sendMessage(outputMessage);
+                    } catch (EOFException eofe) {
+                        // Handle EOFException (socket closed by remote peer)
+                        System.err.println("Socket closed by remote peer.");
+                        break; // Exit the loop
+                    } catch (SocketException se) {
+                        // Handle other socket-related errors
+                        se.printStackTrace();
+                        break; // Exit the loop
+                    }
+                }
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            } finally {
+                close();  // Close connections when finished or in case of an error
+            }
         }
+
+        public void client() {
+            int numberOfRetries = 5;  // specify the maximum number of retries
+            int timeBetweenRetries = 5000;  // specify the time to wait between retries in milliseconds
+            int messageNumber = 0;
+
+            for(int attempt = 0; attempt < numberOfRetries; attempt++) {
+                if(messageNumber > 10) {
+                    break;
+                }
+                try{
+                    //create a socket to connect to the server
+                    String address = this.peerAddress;
+                    int port = this.peerPort;
+                    System.out.println("Attempting to connect to " + address + " in port " + port);
+                    socket = new Socket(address, port);
+                    System.out.println("Connected to " + address + " in port " + port);
+                    //initialize inputStream and outputStream
+                    out = new ObjectOutputStream(socket.getOutputStream());
+                    out.flush();
+                    in = new ObjectInputStream(socket.getInputStream());
+                    do {
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        //read a sentence from the standard input
+                        inputMessage = "Message number " + messageNumber + " from client " + peerId + " to server " + peerId;
+                        //Send the sentence to the server
+                        sendMessage(inputMessage);
+                        //Receive the upperCase sentence from the server
+                        outputMessage = (String) in.readObject();
+                        //show the message to the user
+                        System.out.println("Receive message: " + outputMessage);
+                        messageNumber++;
+                    } while (messageNumber <= 10);
+
+                }
+                catch (ConnectException e) {
+                    System.err.println("Connection refused. You need to initiate a server first.");
+                    System.err.println(this.peerAddress+" "+this.peerPort+" "+this.peerId);
+                    try {
+                        System.err.println("Retry in " + (timeBetweenRetries / 1000) + " seconds... (" + (attempt + 1) + "/" + numberOfRetries + ")");
+                        Thread.sleep(timeBetweenRetries);  // wait for a while before trying to reconnect
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                catch ( ClassNotFoundException e ) {
+                    System.err.println("Class not found");
+                }
+                catch(UnknownHostException unknownHost){
+                    System.err.println("You are trying to connect to an unknown host!");
+                }
+                catch(IOException ioException){
+                    ioException.printStackTrace();
+                }
+                finally{
+                    //Close connections
+                    try{
+                        if (in != null) in.close();
+                        if (out != null) out.close();
+                        if (socket != null) socket.close();
+                    }
+                    catch(IOException ioException){
+                        ioException.printStackTrace();
+                    }
+                }
+            }
+            System.err.println("Maximum number of attempts reached. Exiting client.");
+        }
+
 
         // Prepares the peer to be closed for the program to terminate
         public void close() {
-            // Close the socket
+            //Close the socket
             if (socket != null && !socket.isClosed()) {
                 try {
                     socket.close();
@@ -189,35 +310,6 @@ public class peerProcess {
                     System.err.println("Error closing socket to peer " + peerId + ": " + e.getMessage());
                 }
             }
-
-            // Interrupt the threads
-            if (sendingThread != null && sendingThread.isAlive()) {
-                try {
-                    sendingThread.interrupt();
-                    sendingThread.join();
-                    System.out.println("Sending thread for peer " + peerId + " interrupted and joined");
-                } catch (InterruptedException e) {
-                    System.err.println("Error interrupting/joining sending thread for peer " + peerId + ": " + e.getMessage());
-                }
-            }
-            if (receivingThread != null && receivingThread.isAlive()) {
-                try {
-                    receivingThread.interrupt();
-                    receivingThread.join();
-                    System.out.println("Receiving thread for peer " + peerId + " interrupted and joined");
-                } catch (InterruptedException e) {
-                    System.err.println("Error interrupting/joining receiving thread for peer " + peerId + ": " + e.getMessage());
-                }
-            }
-
-        }
-
-        public Thread getSendingThread() {
-            return sendingThread;
-        }
-
-        public Thread getReceivingThread() {
-            return receivingThread;
         }
     }
 
