@@ -1,5 +1,4 @@
 import java.nio.ByteBuffer;
-import java.util.Vector;
 
 enum msgType{
 choke, // 0 // no payload
@@ -12,7 +11,7 @@ request, // 6 // 4-byte payload
 piece // 7 // 4-byte payload
 }
 
-public class message {
+public class Message {
     msgType Msg;
     /*
  ‘bitfield’ messages is only sent as the first message right after handshaking is done when
@@ -22,7 +21,7 @@ first byte of the bitfield corresponds to piece indices 0 – 7 from high bit to
 respectively. The next one corresponds to piece indices 8 – 15, etc. Spare bits at the end
 are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ message.
  */
-   
+
    Byte[] payload = null;
    String messagepayload = null;
    int payloadlength = -1;
@@ -30,19 +29,19 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 
    //overloaded constructors for message class
    // makes payload
-    public message(msgType Msg, String messagepayload, int payloadlength){
+    public Message(msgType Msg, String messagepayload, int payloadlength){
         this.Msg = Msg;
         this.messagepayload = messagepayload;
         this.payloadlength = payloadlength;
-    
+
     }
-    public message(msgType Msg, Byte[] payload){
+    public Message(msgType Msg, Byte[] payload){
         this.Msg = Msg;
         this.payload = payload;
-      
+
     }
     // makes rest
-    public message(Byte[] payload){
+    public Message(Byte[] payload){
         this.payload = payload;
         msgInterpret();
     }
@@ -55,7 +54,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         }
 
         payloadlength = ByteBuffer.wrap(temp).getInt();
-        
+
         switch (payload[4].intValue()){
             case 0 : //choke
                 if(payloadlength != 1){
@@ -81,7 +80,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     Msg = msgType.interested;
                 }
                 break;
-            case 3 : //notInterested    
+            case 3 : //notInterested
                 if(payloadlength != 1){
                     msgMisinterpreter();
                 }
@@ -89,15 +88,15 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     Msg = msgType.notInterested;
                 }
                 break;
-            case 4 : //have     
+            case 4 : //have
                 if(payloadlength != 5){
                     msgMisinterpreter();
                 }
                 else{
                     Msg = msgType.have;
                 }
-                break;  
-            case 5 : //bitfield 
+                break;
+            case 5 : //bitfield
                 if(payloadlength != 5){
                     msgMisinterpreter();
                 }
@@ -105,7 +104,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     Msg = msgType.bitfield;
                 }
                 break;
-            case 6 : //request 
+            case 6 : //request
                 if(payloadlength != 5){
                     msgMisinterpreter();
                 }
@@ -113,7 +112,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     Msg = msgType.request;
                 }
                 break;
-            case 7 : //piece 
+            case 7 : //piece
                 if(payloadlength != 5){
                     msgMisinterpreter();
                 }
@@ -128,7 +127,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     if(payloadlength > 5){
         temp = new byte[payloadlength - 5];
         for(int i = 5,x= 0; i < payloadlength; i++,x++){
-            temp[x] = payload[i]; 
+            temp[x] = payload[i];
         }
         messagepayload = ByteBuffer.wrap(temp).toString();
         }
@@ -136,7 +135,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             messagepayload = null;
         }
         }
-    
+
     private void msgMisinterpreter(){
         System.out.println("Message Misinterpreted");
         System.exit(0);
@@ -157,4 +156,4 @@ payload with variable size.
  */
 
 
-// NEXT STEP: create a flipped version of the interpreter to convert information to bitwise to be sent. 
+// NEXT STEP: create a flipped version of the interpreter to convert information to bitwise to be sent.
