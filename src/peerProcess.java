@@ -44,7 +44,9 @@ public class peerProcess {
             System.out.println("Error: Peer ID must be an integer");
             System.exit(1);
         }
+        // Create a new peerProcess object
         peerProcess currentPeerProcess = new peerProcess(ID);
+        //A peer process is terminated when it finds out that all the peers, not just itself, have downloaded the complete file.
         currentPeerProcess.close();
     }
 
@@ -81,7 +83,7 @@ public class peerProcess {
         // Read PeerInfo.cfg
         Vector<Peer> peerVector = new Vector<>();
         String currLine;
-
+        this.currentPeer = new Peer();
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             boolean foundCurrentPeer = false;
@@ -98,11 +100,10 @@ public class peerProcess {
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
-                        this.currentPeer = new Peer(tempPeerID, tokens[1], peerPort, null, !foundCurrentPeer);
+                        this.currentPeer.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeer, null);
+                        //currentPeer is just a peer extension of peerProcess that is used to connect to peers before it
+                        //client is set to null because it shouldn't be used in any thread context
                         foundCurrentPeer = true;
-                        for(Peer peer : peerVector) {
-                            peer.currentPeer = this.currentPeer;
-                        }
                     }
                     //Code above tries to connect to any peers before it, and any peers after it will connect to it
                 } catch (NumberFormatException e) {
@@ -162,11 +163,23 @@ public class peerProcess {
         ObjectInputStream in;
         String inputMessage;
         String outputMessage;
-        boolean client;
+        Boolean client;
         Peer currentPeer;
 
-        public Peer(int peerId, String peerAddress, int peerPort, Peer currentPeer, boolean client) {
+        public Peer(int peerId, String peerAddress, int peerPort, Peer currentPeer, Boolean client) {
             super();
+            this.peerId = peerId;
+            this.peerAddress = peerAddress;
+            this.peerPort = peerPort;
+            this.client = client;
+            this.currentPeer = currentPeer;
+        }
+
+        public Peer() {
+            super();
+        }
+
+        public void setPeerValues(int peerId, String peerAddress, int peerPort, Peer currentPeer, Boolean client) {
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
@@ -185,10 +198,13 @@ public class peerProcess {
         }
         @Override
         public void run() {
-            if(client) {
+            System.out.println("Starting connection to peer " + peerId);
+            if(client == null) {
+                //This should never happen
+                System.out.println("Error: client is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+            } else if (client) {
                 client();
-            }
-            else {
+            } else {
                 server();
             }
         }
