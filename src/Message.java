@@ -1,6 +1,7 @@
 import java.nio.ByteBuffer;
 
 enum msgType{
+handshake,
 choke, // 0 // no payload
 unchoke, // 1 //no payload
 interested,// 2 // no payload
@@ -38,8 +39,26 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     public Message(msgType Msg, Byte[] payload){
         this.Msg = Msg;
         this.payload = payload;
-
     }
+
+    public Message(int peerID) {
+        // Handshake message
+        this.Msg = msgType.handshake;
+        this.payload = createHandshakePayload(peerID);
+    }
+
+    private Byte[] createHandshakePayload(int peerID) {
+        ByteBuffer buffer = ByteBuffer.allocate(32);
+        buffer.put("P2PFILESHARINGPROJ".getBytes()); // 18 bytes of P2PFILESHARINGPROJ
+        buffer.put(new byte[10]); // 10 bytes of 0s
+        buffer.putInt(peerID); // 4 bytes of peerID
+        Byte[] handshakePayload = new Byte[32];
+        for (int i = 0; i < 32; i++) {
+            handshakePayload[i] = buffer.array()[i];
+        }
+        return handshakePayload;
+    }
+
     // makes rest
     public Message(Byte[] payload){
         this.payload = payload;
