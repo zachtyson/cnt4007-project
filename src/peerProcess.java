@@ -134,16 +134,27 @@ public class peerProcess {
                 String key = tokens[0];
                 String value = tokens[1];
                 switch (key) {
-                    case "NumberOfPreferredNeighbors" -> numberOfPreferredNeighbors = Integer.parseInt(value);
-                    case "UnchokingInterval" -> unchokingInterval = Integer.parseInt(value);
-                    case "OptimisticUnchokingInterval" -> optimisticUnchokingInterval = Integer.parseInt(value);
-                    case "FileName" -> fileName = value;
-                    case "FileSize" -> fileSize = Integer.parseInt(value);
-                    case "PieceSize" -> pieceSize = Integer.parseInt(value);
-                    default -> {
+                    case "NumberOfPreferredNeighbors":
+                        numberOfPreferredNeighbors = Integer.parseInt(value);
+                        break;
+                    case "UnchokingInterval":
+                        unchokingInterval = Integer.parseInt(value);
+                        break;
+                    case "OptimisticUnchokingInterval":
+                        optimisticUnchokingInterval = Integer.parseInt(value);
+                        break;
+                    case "FileName":
+                        fileName = value;
+                        break;
+                    case "FileSize":
+                        fileSize = Integer.parseInt(value);
+                        break;
+                    case "PieceSize":
+                        pieceSize = Integer.parseInt(value);
+                        break;
+                    default:
                         System.out.println("Unknown key in config file: " + key);
                         System.exit(1);
-                    }
                 }
             }
             in.close();
