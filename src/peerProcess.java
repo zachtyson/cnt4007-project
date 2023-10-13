@@ -51,39 +51,39 @@ public class peerProcess {
     }
 
     public peerProcess(int currentPeerID) {
-        this.peerVector = getPeers(currentPeerID);
+        this.peerThreadVector = getPeers(currentPeerID);
         System.out.println("Peer " + currentPeerID + " has the following peers:");
-        for(Peer peer : peerVector) {
-            System.out.println("Peer " + peer.peerId + " at " + peer.peerAddress + ":" + peer.peerPort);
-            peer.start();
+        for(PeerThread peerThread : peerThreadVector) {
+            System.out.println("Peer " + peerThread.peerId + " at " + peerThread.peerAddress + ":" + peerThread.peerPort);
+            peerThread.start();
         }
         getCommon();
     }
-    public Peer currentPeer;
+    public PeerThread currentPeerThread;
     public int unchokingInterval;
     public int optimisticUnchokingInterval;
     public String fileName;
     public int fileSize;
     public int pieceSize;
     public int numberOfPreferredNeighbors;
-    public Vector<Peer> peerVector;
+    public Vector<PeerThread> peerThreadVector;
 
     public void close() {
         // Close all connections
-        for(Peer peer : peerVector) {
-            peer.close();
+        for(PeerThread peerThread : peerThreadVector) {
+            peerThread.close();
         }
-        if(this.currentPeer != null) {
-            this.currentPeer.close();
+        if(this.currentPeerThread != null) {
+            this.currentPeerThread.close();
         }
     }
 
     //"PeerInfo.cfg"
-    public Vector <Peer> getPeers(int currentPeerID){
+    public Vector <PeerThread> getPeers(int currentPeerID){
         // Read PeerInfo.cfg
-        Vector<Peer> peerVector = new Vector<>();
+        Vector<PeerThread> peerThreadVector = new Vector<>();
         String currLine;
-        this.currentPeer = new Peer();
+        this.currentPeerThread = new PeerThread();
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             boolean foundCurrentPeer = false;
@@ -96,11 +96,11 @@ public class peerProcess {
                     int peerPort = Integer.parseInt(tokens[2]);
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerVector.addElement(new Peer(tempPeerID, tokens[1], peerPort, this.currentPeer, !foundCurrentPeer));
+                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
-                        this.currentPeer.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeer, null);
+                        this.currentPeerThread.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeerThread, null);
                         //currentPeer is just a peer extension of peerProcess that is used to connect to peers before it
                         //client is set to null because it shouldn't be used in any thread context
                         foundCurrentPeer = true;
@@ -115,7 +115,7 @@ public class peerProcess {
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
-        return peerVector;
+        return peerThreadVector;
     }
 
     private void getCommon() {
@@ -165,7 +165,7 @@ public class peerProcess {
             System.out.println(ex.toString());
         }
     }
-    public static class Peer extends Thread{
+    public static class PeerThread extends Thread{
         public int peerId;
         public String peerAddress;
         public int peerPort;
@@ -175,27 +175,27 @@ public class peerProcess {
         String inputMessage;
         String outputMessage;
         Boolean client;
-        Peer currentPeer;
+        PeerThread currentPeerThread;
 
-        public Peer(int peerId, String peerAddress, int peerPort, Peer currentPeer, Boolean client) {
+        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client) {
             super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
-            this.currentPeer = currentPeer;
+            this.currentPeerThread = currentPeerThread;
         }
 
-        public Peer() {
+        public PeerThread() {
             super();
         }
 
-        public void setPeerValues(int peerId, String peerAddress, int peerPort, Peer currentPeer, Boolean client) {
+        public void setPeerValues(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client) {
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
-            this.currentPeer = currentPeer;
+            this.currentPeerThread = currentPeerThread;
         }
 
         void sendMessage(String msg) {
@@ -223,7 +223,7 @@ public class peerProcess {
         public String generateHandshake() {
             String handshake = "P2PFILESHARINGPROJ";
             handshake += "0000000000";
-            handshake += this.currentPeer.peerId;
+            handshake += this.currentPeerThread.peerId;
             return handshake;
         }
 
@@ -244,7 +244,7 @@ public class peerProcess {
         }
 
         public void server() {
-            try (ServerSocket serverSocket = new ServerSocket(this.currentPeer.peerPort)) {
+            try (ServerSocket serverSocket = new ServerSocket(this.currentPeerThread.peerPort)) {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 socket = serverSocket.accept();
                 System.out.println("Connected to " + socket.getRemoteSocketAddress());
