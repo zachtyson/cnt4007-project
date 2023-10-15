@@ -1,18 +1,22 @@
 import java.nio.ByteBuffer;
 
 enum msgType{
-handshake,
-choke, // 0 // no payload
-unchoke, // 1 //no payload
-interested,// 2 // no payload
-notInterested,// 3 // no payload
-have,// 4 // 4-byte payload
-bitfield, // 5 // variable size, depending on the size of the bitfield
-request, // 6 // 4-byte payload
-piece // 7 // 4-byte payload
+    handshake,
+    choke, // 0 // no payload
+    unchoke, // 1 //no payload
+    interested,// 2 // no payload
+    notInterested,// 3 // no payload
+    have,// 4 // 4-byte payload
+    bitfield, // 5 // variable size, depending on the size of the bitfield
+    request, // 6 // 4-byte payload
+    piece // 7 // 4-byte payload
 }
 
 public class Message {
+
+    private Message() {
+        //private constructor}
+    }
     msgType Msg;
     /*
  ‘bitfield’ messages is only sent as the first message right after handshaking is done when
@@ -23,29 +27,27 @@ respectively. The next one corresponds to piece indices 8 – 15, etc. Spare bit
 are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ message.
  */
 
-   Byte[] payload = null;
-   String messagepayload = null;
-   int payloadlength = -1;
-
-
-   //overloaded constructors for message class
-   // makes payload
-    public Message(msgType Msg, String messagepayload, int payloadlength){
-        this.Msg = Msg;
-        this.messagepayload = messagepayload;
-        this.payloadlength = payloadlength;
-
-    }
-    public Message(msgType Msg, Byte[] payload){
-        this.Msg = Msg;
-        this.payload = payload;
-    }
-
-    public Message(int peerID) {
-        // Handshake message
-        this.Msg = msgType.handshake;
-        this.payload = createHandshakePayload(peerID);
-    }
+//   Byte[] payload = null;
+//   String messagepayload = null;
+//   int payloadlength = -1;
+//   overloaded constructors for message class
+//   // makes payload
+//    public Message(msgType Msg, String messagepayload, int payloadlength){
+//        this.Msg = Msg;
+//        this.messagepayload = messagepayload;
+//        this.payloadlength = payloadlength;
+//
+//    }
+//    public Message(msgType Msg, Byte[] payload){
+//        this.Msg = Msg;
+//        this.payload = payload;
+//    }
+//
+//    public Message(int peerID) {
+//        // Handshake message
+//        this.Msg = msgType.handshake;
+//        this.payload = createHandshakePayload(peerID);
+//    }
 
     private Byte[] createHandshakePayload(int peerID) {
         ByteBuffer buffer = ByteBuffer.allocate(32);
@@ -60,23 +62,23 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     // makes rest
-    public Message(Byte[] payload){
-        this.payload = payload;
-        msgInterpret();
-    }
+//    public Message(Byte[] payload){
+//        this.payload = payload;
+//        msgInterpret();
+//    }
     //checks that the msg is valid and has the correct payload for the msg type
-    private void msgInterpret(){
-        //4-byte message length field, 1-byte message type field, and a messag payload with variable size.
+    private Interpretation msgInterpret(Byte[] payload){
+        //4-byte message length field, 1-byte message type field, and a message payload with variable size.
         byte[] temp = new byte[4];
         for(int i = 0; i < 4; i++){
             temp[i] = payload[i];
         }
 
-        payloadlength = ByteBuffer.wrap(temp).getInt();
+        int payloadLength = ByteBuffer.wrap(temp).getInt();
 
         switch (payload[4].intValue()){
             case 0 : //choke
-                if(payloadlength != 1){
+                if(payloadLength != 1){
                     msgMisinterpreter();
                 }
                 else{
@@ -84,7 +86,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 1 : //unchoke
-                if(payloadlength != 1){
+                if(payloadLength != 1){
                     msgMisinterpreter();
                 }
                 else{
@@ -92,7 +94,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 2 : //interested
-                if(payloadlength != 1){
+                if(payloadLength != 1){
                     msgMisinterpreter();
                 }
                 else{
@@ -100,7 +102,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 3 : //notInterested
-                if(payloadlength != 1){
+                if(payloadLength != 1){
                     msgMisinterpreter();
                 }
                 else{
@@ -108,7 +110,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 4 : //have
-                if(payloadlength != 5){
+                if(payloadLength != 5){
                     msgMisinterpreter();
                 }
                 else{
@@ -116,7 +118,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 5 : //bitfield
-                if(payloadlength != 5){
+                if(payloadLength != 5){
                     msgMisinterpreter();
                 }
                 else{
@@ -124,7 +126,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 6 : //request
-                if(payloadlength != 5){
+                if(payloadLength != 5){
                     msgMisinterpreter();
                 }
                 else{
@@ -132,7 +134,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 7 : //piece
-                if(payloadlength != 5){
+                if(payloadLength != 5){
                     msgMisinterpreter();
                 }
                 else{
@@ -143,29 +145,44 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 msgMisinterpreter();
                 break;
         }
-    if(payloadlength > 5){
-        temp = new byte[payloadlength - 5];
-        for(int i = 5,x= 0; i < payloadlength; i++,x++){
-            temp[x] = payload[i];
-        }
-        messagepayload = ByteBuffer.wrap(temp).toString();
+        //First 5 bytes are the length (4) and the type (1) so the payload is the rest
+        String messagePayload;
+        if(payloadLength > 5){
+            temp = new byte[payloadLength - 5];
+            for(int i = 5,x= 0; i < payloadLength; i++,x++){
+                temp[x] = payload[i];
+            }
+            messagePayload = ByteBuffer.wrap(temp).toString();
         }
         else{
-            messagepayload = null;
+            messagePayload = null;
         }
-        }
+        Interpretation interpretation = new Interpretation();
+        interpretation.Msg = Msg;
+        interpretation.messagePayload = messagePayload;
+        interpretation.payloadLength = payloadLength;
+        return interpretation;
+    }
 
     private void msgMisinterpreter(){
         System.out.println("Message Misinterpreted");
         System.exit(0);
     }
 
-    public String ToString(){
+    public String ToString(Byte[] payload){
+        msgInterpret(payload);
+        //debugging purposes
         String temp = "";
         temp += "Message Type: " + Msg + "\n";
         temp += "Message Payload: " + messagepayload + "\n";
         temp += "Message Payload Length: " + payloadlength + "\n";
         return temp;
+    }
+
+    public class Interpretation {
+        public msgType Msg;
+        public String messagePayload;
+        public int payloadLength;
     }
 }
 /*
