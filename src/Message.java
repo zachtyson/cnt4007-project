@@ -1,6 +1,6 @@
 import java.nio.ByteBuffer;
 
-enum msgType{
+enum MsgType {
     handshake,
     choke, // 0 // no payload
     unchoke, // 1 //no payload
@@ -17,7 +17,7 @@ public class Message {
     private Message() {
         //private constructor}
     }
-    msgType Msg;
+    MsgType Msg;
     /*
  ‘bitfield’ messages is only sent as the first message right after handshaking is done when
 a connection is established. ‘bitfield’ messages have a bitfield as its payload. Each bit in
@@ -82,7 +82,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.choke;
+                    Msg = MsgType.choke;
                 }
                 break;
             case 1 : //unchoke
@@ -90,7 +90,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.unchoke;
+                    Msg = MsgType.unchoke;
                 }
                 break;
             case 2 : //interested
@@ -98,7 +98,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.interested;
+                    Msg = MsgType.interested;
                 }
                 break;
             case 3 : //notInterested
@@ -106,7 +106,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.notInterested;
+                    Msg = MsgType.notInterested;
                 }
                 break;
             case 4 : //have
@@ -114,7 +114,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.have;
+                    Msg = MsgType.have;
                 }
                 break;
             case 5 : //bitfield
@@ -122,7 +122,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.bitfield;
+                    Msg = MsgType.bitfield;
                 }
                 break;
             case 6 : //request
@@ -130,7 +130,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.request;
+                    Msg = MsgType.request;
                 }
                 break;
             case 7 : //piece
@@ -138,7 +138,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter();
                 }
                 else{
-                    Msg = msgType.piece;
+                    Msg = MsgType.piece;
                 }
                 break;
             default:
@@ -181,7 +181,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     public static class Interpretation {
-        public msgType Msg;
+        public MsgType Msg;
         public String messagePayload;
         public int payloadLength;
     }
