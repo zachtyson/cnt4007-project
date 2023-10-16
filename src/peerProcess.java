@@ -265,12 +265,8 @@ public class peerProcess {
         public void client() {
             int numberOfRetries = 5;  // specify the maximum number of retries
             int timeBetweenRetries = 5000;  // specify the time to wait between retries in milliseconds
-            int messageNumber = 0;
 
             for(int attempt = 0; attempt < numberOfRetries; attempt++) {
-                if(messageNumber > 10) {
-                    break;
-                }
                 try{
                     //create a socket to connect to the server
                     String address = this.peerAddress;
