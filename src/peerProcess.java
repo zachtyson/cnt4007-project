@@ -226,34 +226,37 @@ public class peerProcess {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 socket = serverSocket.accept();
                 System.out.println("Connected to " + socket.getRemoteSocketAddress());
-                in = new DataInputStream(socket.getInputStream());
-                out = new DataOutputStream(socket.getOutputStream());
-                sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024]; // larger buffer for better efficiency
-                int bytesRead;
-                while (true) {
-                    if (in.available() > 0) {
-                        bytesRead = in.read(buffer);
-                        byteArrayOutputStream.write(buffer, 0, bytesRead);
-                    } else {
-                        // Assuming you want to break out once you've received all data
-                        break;
-                    }
-                }
-                outputMessage = byteArrayOutputStream.toByteArray();
-
-                if(!Message.checkHandshake(outputMessage, this.peerId)) {
-                    System.out.println("Handshake failed");
-                    System.exit(1);
-                }
-
-                System.out.println("Handshake successful");
+                peerHandshake();
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 close();  // Close connections when finished or in case of an error
             }
+        }
+
+        private void peerHandshake() throws IOException {
+            in = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
+            sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while (true) {
+                if (in.available() > 0) {
+                    bytesRead = in.read(buffer);
+                    byteArrayOutputStream.write(buffer, 0, bytesRead);
+                } else {
+                    break;
+                }
+            }
+            outputMessage = byteArrayOutputStream.toByteArray();
+
+            if(!Message.checkHandshake(outputMessage, this.peerId)) {
+                System.out.println("Handshake failed");
+                System.exit(1);
+            }
+
+            System.out.println("Handshake successful");
         }
 
         public void client() {
@@ -273,27 +276,7 @@ public class peerProcess {
                     socket = new Socket(address, port);
                     System.out.println("Connected to " + address + " in port " + port);
                     //initialize inputStream and outputStream
-                    in = new DataInputStream(socket.getInputStream());
-                    out = new DataOutputStream(socket.getOutputStream());
-                    sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[1024]; // larger buffer for better efficiency
-                    int bytesRead;
-                    while (true) {
-                        if (in.available() > 0) {
-                            bytesRead = in.read(buffer);
-                            byteArrayOutputStream.write(buffer, 0, bytesRead);
-                        } else {
-                            // Assuming you want to break out once you've received all data
-                            break;
-                        }
-                    }
-                    outputMessage = byteArrayOutputStream.toByteArray();
-                    if(!Message.checkHandshake(outputMessage, this.peerId)) {
-                        System.out.println("Handshake failed");
-                        System.exit(1);
-                    }
-                    System.out.println("Handshake successful");
+                    peerHandshake();
                     break;
                 }
                 catch (ConnectException e) {
