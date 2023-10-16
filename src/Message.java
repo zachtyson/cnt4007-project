@@ -170,16 +170,17 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     public String ToString(Byte[] payload){
-        msgInterpret(payload);
-        //debugging purposes
+        //break down the payload into the message type, the payload, and the payload length
+
+        Interpretation msg = msgInterpret(payload);
         String temp = "";
         temp += "Message Type: " + Msg + "\n";
-        temp += "Message Payload: " + messagepayload + "\n";
-        temp += "Message Payload Length: " + payloadlength + "\n";
+        temp += "Message Payload Length: " + msg.payloadLength + "\n";
+        temp += "Message Payload: " + msg.messagePayload + "\n";
         return temp;
     }
 
-    public class Interpretation {
+    public static class Interpretation {
         public msgType Msg;
         public String messagePayload;
         public int payloadLength;
