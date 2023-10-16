@@ -63,7 +63,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return handshakePayload;
     }
 
-    public static boolean checkHandshake(byte[] handshake, int otherPeerID) {
+    public static boolean checkHandshake(byte[] handshake, int expectedPeerID) {
         if (handshake.length != 32) {
             return false;
         }
@@ -80,9 +80,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             }
         }
         int peerID = buffer.getInt();
-        System.out.println("Peer ID: " + peerID);
-        System.out.println("Other Peer ID: " + otherPeerID);
-        return peerID == otherPeerID;
+        System.out.println("Given Peer ID: " + peerID);
+        System.out.println("Expected Peer ID: " + expectedPeerID);
+        return peerID == expectedPeerID;
     }
 
     // makes rest
