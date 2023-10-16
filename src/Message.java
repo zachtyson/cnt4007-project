@@ -49,12 +49,12 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 //        this.payload = createHandshakePayload(peerID);
 //    }
 
-    private Byte[] createHandshakePayload(int peerID) {
+    public static byte[] createHandshakePayload(int peerID) {
         ByteBuffer buffer = ByteBuffer.allocate(32);
         buffer.put("P2PFILESHARINGPROJ".getBytes()); // 18 bytes of P2PFILESHARINGPROJ
         buffer.put(new byte[10]); // 10 bytes of 0s
         buffer.putInt(peerID); // 4 bytes of peerID
-        Byte[] handshakePayload = new Byte[32];
+        byte[] handshakePayload = new byte[32];
         for (int i = 0; i < 32; i++) {
             handshakePayload[i] = buffer.array()[i];
         }
@@ -67,19 +67,21 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 //        msgInterpret();
 //    }
     //checks that the msg is valid and has the correct payload for the msg type
-    private Interpretation msgInterpret(Byte[] payload){
+    private Interpretation msgInterpret(byte[] payload){
         //4-byte message length field, 1-byte message type field, and a message payload with variable size.
         byte[] temp = new byte[4];
-        for(int i = 0; i < 4; i++){
-            temp[i] = payload[i];
-        }
+        System.arraycopy(payload, 0, temp, 0, 4);
 
         int payloadLength = ByteBuffer.wrap(temp).getInt();
+        if(payload.length < 5){
+            //message is too short and doesn't even have a message type
+            msgMisinterpreter(payload);
+        }
 
-        switch (payload[4].intValue()){
+        switch (payload[4]){
             case 0 : //choke
                 if(payloadLength != 1){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.choke;
@@ -87,7 +89,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 1 : //unchoke
                 if(payloadLength != 1){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.unchoke;
@@ -95,7 +97,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 2 : //interested
                 if(payloadLength != 1){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.interested;
@@ -103,7 +105,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 3 : //notInterested
                 if(payloadLength != 1){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.notInterested;
@@ -111,7 +113,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 4 : //have
                 if(payloadLength != 5){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.have;
@@ -119,7 +121,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 5 : //bitfield
                 if(payloadLength != 5){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.bitfield;
@@ -127,7 +129,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 6 : //request
                 if(payloadLength != 5){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.request;
@@ -135,14 +137,14 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 7 : //piece
                 if(payloadLength != 5){
-                    msgMisinterpreter();
+                    msgMisinterpreter(payload);
                 }
                 else{
                     Msg = MsgType.piece;
                 }
                 break;
             default:
-                msgMisinterpreter();
+                msgMisinterpreter(payload);
                 break;
         }
         //First 5 bytes are the length (4) and the type (1) so the payload is the rest
@@ -164,12 +166,16 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return interpretation;
     }
 
-    private void msgMisinterpreter(){
-        System.out.println("Message Misinterpreted");
+    private void msgMisinterpreter(byte[] payload){
+        System.out.println("Bad Message");
+        //Print each byte
+        for(byte b : payload){
+            System.out.println(b);
+        }
         System.exit(0);
     }
 
-    public String ToString(Byte[] payload){
+    public String ToString(byte[] payload){
         //break down the payload into the message type, the payload, and the payload length
 
         Interpretation msg = msgInterpret(payload);
