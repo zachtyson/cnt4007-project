@@ -226,7 +226,9 @@ public class peerProcess {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 socket = serverSocket.accept();
                 System.out.println("Connected to " + socket.getRemoteSocketAddress());
-                peerHandshake();
+                if(!peerHandshake()) {
+                    System.exit(1);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             } finally {
@@ -234,7 +236,7 @@ public class peerProcess {
             }
         }
 
-        private void peerHandshake() throws IOException {
+        private boolean peerHandshake() throws IOException {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
@@ -252,11 +254,12 @@ public class peerProcess {
             outputMessage = byteArrayOutputStream.toByteArray();
 
             if(!Message.checkHandshake(outputMessage, this.peerId)) {
-                System.out.println("Handshake failed");
-                System.exit(1);
+                System.err.println("Handshake failed");
+                return false;
             }
 
-            System.out.println("Handshake successful");
+            System.err.println("Handshake successful");
+            return true;
         }
 
         public void client() {
