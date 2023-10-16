@@ -198,16 +198,6 @@ public class peerProcess {
             this.currentPeerThread = currentPeerThread;
         }
 
-        void sendMessage(String msg) {
-            try {
-                //stream write the message
-                out.write(msg.getBytes());
-                out.flush();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        }
-
         void sendMessage(byte[] msg) {
             try {
                 //stream write the message
