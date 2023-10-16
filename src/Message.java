@@ -1,4 +1,6 @@
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 enum MsgType {
     handshake,
@@ -52,13 +54,35 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     public static byte[] createHandshakePayload(int peerID) {
         ByteBuffer buffer = ByteBuffer.allocate(32);
         buffer.put("P2PFILESHARINGPROJ".getBytes()); // 18 bytes of P2PFILESHARINGPROJ
-        buffer.put(new byte[10]); // 10 bytes of 0s
+        buffer.put(new byte[10]); // 10 bytes of 0 bits
         buffer.putInt(peerID); // 4 bytes of peerID
         byte[] handshakePayload = new byte[32];
         for (int i = 0; i < 32; i++) {
             handshakePayload[i] = buffer.array()[i];
         }
         return handshakePayload;
+    }
+
+    public static boolean checkHandshake(byte[] handshake, int otherPeerID) {
+        if (handshake.length != 32) {
+            return false;
+        }
+        ByteBuffer buffer = ByteBuffer.wrap(handshake);
+        byte[] p2pHeader = new byte[18];
+        buffer.get(p2pHeader, 0, 18);
+        if (!Arrays.equals(p2pHeader, "P2PFILESHARINGPROJ".getBytes())) {
+            return false;
+        }
+        // Check bytes 19-27 for zeros
+        for (int i = 0; i < 10; i++) {
+            if (buffer.get() != 0) {
+                return false;
+            }
+        }
+        int peerID = buffer.getInt();
+        System.out.println("Peer ID: " + peerID);
+        System.out.println("Other Peer ID: " + otherPeerID);
+        return peerID == otherPeerID;
     }
 
     // makes rest
