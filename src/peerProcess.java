@@ -170,10 +170,10 @@ public class peerProcess {
         public String peerAddress;
         public int peerPort;
         private Socket socket;
-        ObjectOutputStream out;
-        ObjectInputStream in;
-        String inputMessage;
-        String outputMessage;
+        OutputStream out;
+        InputStream in;
+        byte[] inputMessage;
+        byte[] outputMessage;
         Boolean client;
         PeerThread currentPeerThread;
 
@@ -201,8 +201,19 @@ public class peerProcess {
         void sendMessage(String msg) {
             try {
                 //stream write the message
-                out.writeObject(msg);
+                out.write(msg.getBytes());
                 out.flush();
+            } catch (IOException ioException) {
+                ioException.printStackTrace();
+            }
+        }
+
+        void sendMessage(byte[] msg) {
+            try {
+                //stream write the message
+                out.write(msg);
+                out.flush();
+                System.out.println("Sent message to peer " + peerId);
             } catch (IOException ioException) {
                 ioException.printStackTrace();
             }
@@ -220,63 +231,35 @@ public class peerProcess {
             }
         }
 
-        public String generateHandshake() {
-            String handshake = "P2PFILESHARINGPROJ";
-            handshake += "0000000000";
-            handshake += this.currentPeerThread.peerId;
-            return handshake;
-        }
-
-        public boolean checkHandshake(String handshake) {
-            System.out.println(handshake);
-            if(handshake.length() != 32) {
-                return false;
-            }
-            if(!handshake.substring(0, 18).equals("P2PFILESHARINGPROJ")) {
-                return false;
-            }
-            if(!handshake.substring(18, 28).equals("0000000000")) {
-                return false;
-            }
-            System.out.println(handshake.substring(28));
-            System.out.println(Integer.toString(this.peerId));
-            return handshake.substring(28).equals(Integer.toString(this.peerId));
-        }
-
         public void server() {
             try (ServerSocket serverSocket = new ServerSocket(this.currentPeerThread.peerPort)) {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 socket = serverSocket.accept();
                 System.out.println("Connected to " + socket.getRemoteSocketAddress());
+                in = new DataInputStream(socket.getInputStream());
+                out = new DataOutputStream(socket.getOutputStream());
+                sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024]; // larger buffer for better efficiency
+                int bytesRead;
+                while (true) {
+                    if (in.available() > 0) {
+                        bytesRead = in.read(buffer);
+                        byteArrayOutputStream.write(buffer, 0, bytesRead);
+                    } else {
+                        // Assuming you want to break out once you've received all data
+                        break;
+                    }
+                }
+                outputMessage = byteArrayOutputStream.toByteArray();
 
-                in = new ObjectInputStream(socket.getInputStream());
-                out = new ObjectOutputStream(socket.getOutputStream());
-                inputMessage = generateHandshake();
-                sendMessage(inputMessage);
-                outputMessage = (String) in.readObject();
-                if(!checkHandshake(outputMessage)) {
+                if(!Message.checkHandshake(outputMessage, this.peerId)) {
                     System.out.println("Handshake failed");
                     System.exit(1);
                 }
 
-                while (true) {
-                    try {
-                        inputMessage = (String) in.readObject();
-                        System.out.println("Received: " + inputMessage);
-
-                        outputMessage = "Acknowledged: " + inputMessage;
-                        sendMessage(outputMessage);
-                    } catch (EOFException eofe) {
-                        // Handle EOFException (socket closed by remote peer)
-                        System.err.println("Socket closed by remote peer.");
-                        break; // Exit the loop
-                    } catch (SocketException se) {
-                        // Handle other socket-related errors
-                        se.printStackTrace();
-                        break; // Exit the loop
-                    }
-                }
-            } catch (IOException | ClassNotFoundException e) {
+                System.out.println("Handshake successful");
+            } catch (IOException e) {
                 e.printStackTrace();
             } finally {
                 close();  // Close connections when finished or in case of an error
@@ -300,33 +283,28 @@ public class peerProcess {
                     socket = new Socket(address, port);
                     System.out.println("Connected to " + address + " in port " + port);
                     //initialize inputStream and outputStream
-                    out = new ObjectOutputStream(socket.getOutputStream());
-                    out.flush();
-                    in = new ObjectInputStream(socket.getInputStream());
-                    inputMessage = generateHandshake();
-                    sendMessage(inputMessage);
-                    outputMessage = (String) in.readObject();
-                    if(!checkHandshake(outputMessage)) {
+                    in = new DataInputStream(socket.getInputStream());
+                    out = new DataOutputStream(socket.getOutputStream());
+                    sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[1024]; // larger buffer for better efficiency
+                    int bytesRead;
+                    while (true) {
+                        if (in.available() > 0) {
+                            bytesRead = in.read(buffer);
+                            byteArrayOutputStream.write(buffer, 0, bytesRead);
+                        } else {
+                            // Assuming you want to break out once you've received all data
+                            break;
+                        }
+                    }
+                    outputMessage = byteArrayOutputStream.toByteArray();
+                    if(!Message.checkHandshake(outputMessage, this.peerId)) {
                         System.out.println("Handshake failed");
                         System.exit(1);
                     }
-                    do {
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                        //read a sentence from the standard input
-                        inputMessage = "Message number " + messageNumber + " from client " + peerId + " to server " + peerId;
-                        //Send the sentence to the server
-                        sendMessage(inputMessage);
-                        //Receive the upperCase sentence from the server
-                        outputMessage = (String) in.readObject();
-                        //show the message to the user
-                        System.out.println("Receive message: " + outputMessage);
-                        messageNumber++;
-                    } while (messageNumber <= 10);
-
+                    System.out.println("Handshake successful");
+                    break;
                 }
                 catch (ConnectException e) {
                     System.err.println("Connection refused. You need to initiate a server first.");
@@ -337,11 +315,7 @@ public class peerProcess {
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                     }
-                }
-                catch ( ClassNotFoundException e ) {
-                    System.err.println("Class not found");
-                }
-                catch(UnknownHostException unknownHost){
+                } catch(UnknownHostException unknownHost){
                     System.err.println("You are trying to connect to an unknown host!");
                 }
                 catch(IOException ioException){
