@@ -1,8 +1,10 @@
 import java.io.*;
 import java.net.*;
+import java.util.BitSet;
 import java.util.Vector;
 
 public class peerProcess {
+    static final String theFile = "thefile";
     // From my understanding the first argument is the peerID, which we can see
     // in PeerInfo.cfg as well as page 7 of the project description pdf
     // e.g 'java peerProcess 1001'
@@ -177,6 +179,8 @@ public class peerProcess {
         Boolean client;
         PeerThread currentPeerThread;
 
+        BitSet bitfield;
+
         public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client) {
             super();
             this.peerId = peerId;
@@ -219,6 +223,21 @@ public class peerProcess {
             } else {
                 server();
             }
+            //at this point the connection is established and we can start sending messages
+            //check if current peer has the file
+            //if it does, send a bitfield message with all 1s
+            //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
+            File file = new File(theFile);
+            if(file.exists()) {
+                //Get file size
+
+                //send bitfield message with all 1s
+                BitSet bitfield = new BitSet();
+
+            } else {
+                //if no file then no bitfield message, can just wait for other peers to send bitfield messages
+            }
+
         }
 
         public void server() {
