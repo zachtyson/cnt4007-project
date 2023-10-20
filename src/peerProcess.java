@@ -62,13 +62,9 @@ public class peerProcess {
         getCommon();
     }
     public PeerThread currentPeerThread;
-    public int unchokingInterval;
-    public int optimisticUnchokingInterval;
-    public String fileName;
-    public int fileSize;
-    public int pieceSize;
-    public int numberOfPreferredNeighbors;
     public Vector<PeerThread> peerThreadVector;
+
+    public CommonCfg commonCfg;
 
     public void close() {
         // Close all connections
@@ -124,6 +120,13 @@ public class peerProcess {
         String currLine;
         try {
             BufferedReader in = new BufferedReader(new FileReader("Common.cfg"));
+            int numberOfPreferredNeighbors = -1;
+            int unchokingInterval = -1;
+            int optimisticUnchokingInterval = -1;
+            String fileName = null;
+            int fileSize = -1;
+            int pieceSize = -1;
+
             while((currLine = in.readLine()) != null) {
                 // Split line by whitespace
                 String[] tokens = currLine.split("\\s+",2);
@@ -159,6 +162,7 @@ public class peerProcess {
                         System.exit(1);
                 }
             }
+            commonCfg = new CommonCfg(numberOfPreferredNeighbors, unchokingInterval, optimisticUnchokingInterval, fileName, fileSize, pieceSize);
             in.close();
         } catch (NumberFormatException e) {
             System.out.println("Error: Value must be an integer");
@@ -178,7 +182,6 @@ public class peerProcess {
         byte[] outputMessage;
         Boolean client;
         PeerThread currentPeerThread;
-
         BitSet bitfield;
 
         public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client) {
@@ -339,6 +342,23 @@ public class peerProcess {
                     System.err.println("Error closing socket to peer " + peerId + ": " + e.getMessage());
                 }
             }
+        }
+    }
+
+    public static class CommonCfg {
+        public int numberOfPreferredNeighbors;
+        public int unchokingInterval;
+        public int optimisticUnchokingInterval;
+        public String fileName;
+        public int fileSize;
+        public int pieceSize;
+        public CommonCfg(int numberOfPreferredNeighbors, int unchokingInterval, int optimisticUnchokingInterval, String fileName, int fileSize, int pieceSize) {
+            this.numberOfPreferredNeighbors = numberOfPreferredNeighbors;
+            this.unchokingInterval = unchokingInterval;
+            this.optimisticUnchokingInterval = optimisticUnchokingInterval;
+            this.fileName = fileName;
+            this.fileSize = fileSize;
+            this.pieceSize = pieceSize;
         }
     }
 
