@@ -230,12 +230,15 @@ public class peerProcess {
             //check if current peer has the file
             //if it does, send a bitfield message with all 1s
             //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
-            File file = new File(theFile);
+            File file = new File(this.commonCfg.fileName);
             if(file.exists()) {
-                //Get file size
+                int fileSize = this.commonCfg.fileSize;
+                int pieceSize = this.commonCfg.pieceSize;
+                int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
 
                 //send bitfield message with all 1s
-                BitSet bitfield = new BitSet();
+                BitSet bitfield = new BitSet(numberOfPieces);
+                bitfield.set(0, numberOfPieces);
 
             } else {
                 //if no file then no bitfield message, can just wait for other peers to send bitfield messages
