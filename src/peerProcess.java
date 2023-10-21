@@ -94,7 +94,7 @@ public class peerProcess {
                     int peerPort = Integer.parseInt(tokens[2]);
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer));
+                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
@@ -183,8 +183,9 @@ public class peerProcess {
         Boolean client;
         PeerThread currentPeerThread;
         BitSet bitfield;
+        CommonCfg commonCfg;
 
-        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client) {
+        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg) {
             super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
