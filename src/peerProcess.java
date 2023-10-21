@@ -4,7 +4,6 @@ import java.util.BitSet;
 import java.util.Vector;
 
 public class peerProcess {
-    static final String theFile = "thefile";
     // From my understanding the first argument is the peerID, which we can see
     // in PeerInfo.cfg as well as page 7 of the project description pdf
     // e.g 'java peerProcess 1001'
