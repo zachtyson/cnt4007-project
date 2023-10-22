@@ -237,7 +237,7 @@ public class peerProcess {
                 int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
 
                 //send bitfield message with all 1s
-                BitSet bitfield = new BitSet(numberOfPieces);
+                bitfield = new BitSet(numberOfPieces);
                 bitfield.set(0, numberOfPieces);
 
             } else {
