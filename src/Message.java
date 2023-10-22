@@ -1,6 +1,7 @@
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.BitSet;
 
 enum MsgType {
     handshake,
@@ -61,6 +62,22 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             handshakePayload[i] = buffer.array()[i];
         }
         return handshakePayload;
+    }
+
+    public static byte[] generateBitmapMessage(BitSet bitmap) {
+        // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
+        // 4-byte message length field
+        int bitmapLength = bitmap.toByteArray().length;
+        //message type is 5 aka 00000101
+        byte[] bitmapMessage = new byte[bitmapLength + 5];
+        // 4-byte message length field
+        byte[] length = ByteBuffer.allocate(4).putInt(bitmapLength + 1).array();
+        System.arraycopy(length, 0, bitmapMessage, 0, 4);
+        // 1-byte message type field
+        bitmapMessage[4] = 5;
+        // message payload
+        System.arraycopy(bitmap.toByteArray(), 0, bitmapMessage, 5, bitmapLength);
+        return bitmapMessage;
     }
 
     public static boolean checkHandshake(byte[] handshake, int expectedPeerID) {
