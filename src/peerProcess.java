@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 import java.util.Vector;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -41,7 +42,7 @@ public class peerProcess {
     public static void init(int peerID) {
         FileHandler fh;
         try {
-            fh = new FileHandler("MyLogFile.log");
+            fh = new FileHandler("log_peer_" + peerID + ".log");
 
             logger.addHandler(fh);
             SimpleFormatter formatter = new SimpleFormatter();
@@ -52,8 +53,6 @@ public class peerProcess {
     }
 
     public static void main(String[] args) {
-        init();
-        logger.info("logger initialized");
         // Check for first argument
         if (args.length < 1) {
             System.out.println("Error: Missing peer ID argument");
@@ -72,6 +71,8 @@ public class peerProcess {
             System.exit(1);
         }
         // Create a new peerProcess object
+        init(ID);
+        logger.info("Peer ID is " + ID);
         peerProcess currentPeerProcess = new peerProcess(ID);
         //A peer process is terminated when it finds out that all the peers, not just itself, have downloaded the complete file.
         currentPeerProcess.close();
