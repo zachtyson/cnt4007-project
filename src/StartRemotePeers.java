@@ -68,9 +68,14 @@ public class StartRemotePeers {
                 copyFile(path, peerFolderFile.getAbsolutePath(), "thefile", peerInfo);
             }
             try {
-                ProcessBuilder compilePeerProcess = new ProcessBuilder("javac", "Message.java","peerProcess.java");
+                ProcessBuilder compilePeerProcess = new ProcessBuilder("javac","peerProcess.java");
                 compilePeerProcess.directory(new File(peerFolderFile.getAbsolutePath()));
                 compilePeerProcess.start().waitFor();
+
+                ProcessBuilder compileMessage = new ProcessBuilder("javac","Message.java");
+                compileMessage.directory(new File(peerFolderFile.getAbsolutePath()));
+                compileMessage.start().waitFor();
+
             }
             catch (Exception ex) {
                 System.out.println(ex.toString());
