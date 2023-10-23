@@ -52,13 +52,13 @@ public class peerProcess {
     }
 
     public peerProcess(int currentPeerID) {
+        getCommon();
         this.peerThreadVector = getPeers(currentPeerID);
         System.out.println("Peer " + currentPeerID + " has the following peers:");
         for(PeerThread peerThread : peerThreadVector) {
             System.out.println("Peer " + peerThread.peerId + " at " + peerThread.peerAddress + ":" + peerThread.peerPort);
             peerThread.start();
         }
-        getCommon();
     }
     public PeerThread currentPeerThread;
     public Vector<PeerThread> peerThreadVector;
@@ -81,6 +81,7 @@ public class peerProcess {
         Vector<PeerThread> peerThreadVector = new Vector<>();
         String currLine;
         this.currentPeerThread = new PeerThread();
+        this.currentPeerThread.commonCfg = this.commonCfg;
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             boolean foundCurrentPeer = false;
@@ -91,9 +92,11 @@ public class peerProcess {
                     // Attempt to parse peer ID
                     int tempPeerID = Integer.parseInt(tokens[0]);
                     int peerPort = Integer.parseInt(tokens[2]);
+                    int hasFile = Integer.parseInt(tokens[3]);
+                    boolean hasFileOnStart = hasFile == 1;
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg));
+                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg,hasFileOnStart));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
@@ -183,14 +186,16 @@ public class peerProcess {
         PeerThread currentPeerThread;
         BitSet bitfield;
         CommonCfg commonCfg;
+        boolean hasFileOnStart;
 
-        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg) {
+        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg, boolean hasFileOnStart) {
             super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
             this.currentPeerThread = currentPeerThread;
+            this.commonCfg = commonCfg;
         }
 
         public PeerThread() {
@@ -230,19 +235,26 @@ public class peerProcess {
             //check if current peer has the file
             //if it does, send a bitfield message with all 1s
             //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
-            File file = new File(this.commonCfg.fileName);
-            if(file.exists()) {
-                int fileSize = this.commonCfg.fileSize;
-                int pieceSize = this.commonCfg.pieceSize;
-                int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
-
-                //send bitfield message with all 1s
-                bitfield = new BitSet(numberOfPieces);
-                bitfield.set(0, numberOfPieces);
-
-            } else {
-                //if no file then no bitfield message, can just wait for other peers to send bitfield messages
-            }
+//            if(this.currentPeerThread.hasFileOnStart) {
+//                File file = new File(this.commonCfg.fileName);
+//                int fileSize = this.commonCfg.fileSize;
+//                int pieceSize = this.commonCfg.pieceSize;
+//                int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
+//
+//                //send bitfield message with all 1s
+//                bitfield = new BitSet(numberOfPieces);
+//                bitfield.set(0, numberOfPieces);
+//                byte[] bitfieldMessage = Message.generateBitmapMessage(bitfield);
+//                //print out each individual bit
+//                for(int i = 0; i < bitfieldMessage.length; i++) {
+//                    for(int j = 0; j < 8; j++) {
+//                        System.out.print((bitfieldMessage[i] >> j) & 1);
+//                    }
+//                }
+//
+//            } else {
+//                //if no file then no bitfield message, can just wait for other peers to send bitfield messages
+//            }
 
         }
 
@@ -330,7 +342,7 @@ public class peerProcess {
                     }
                 }
             }
-            System.err.println("Maximum number of attempts reached. Exiting client.");
+           System.err.println("Maximum number of attempts reached. Exiting client.");
         }
 
 
