@@ -63,7 +63,6 @@ public class peerProcess {
     }
     public PeerThread currentPeerThread;
     public Vector<PeerThread> peerThreadVector;
-
     public CommonCfg commonCfg;
 
     public void close() {
@@ -181,14 +180,10 @@ public class peerProcess {
         private Socket socket;
         OutputStream out;
         InputStream in;
-        byte[] inputMessage;
-        byte[] outputMessage;
         Boolean client;
         PeerThread currentPeerThread;
         BitSet bitfield;
         CommonCfg commonCfg;
-        boolean hasFileOnStart;
-
         public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg, boolean hasFileOnStart) {
             super();
             this.peerId = peerId;
