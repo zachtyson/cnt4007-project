@@ -63,11 +63,20 @@ public class StartRemotePeers {
             copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg", peerInfo);
             copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg", peerInfo);
             copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "peerProcess.java", peerInfo);
+            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "Message.java", peerInfo);
             if(peerInfo.hasFileOnStart) {
                 copyFile(path, peerFolderFile.getAbsolutePath(), "thefile", peerInfo);
             }
-
+            try {
+                ProcessBuilder compilePeerProcess = new ProcessBuilder("javac", "Message.java","peerProcess.java");
+                compilePeerProcess.directory(new File(peerFolderFile.getAbsolutePath()));
+                compilePeerProcess.start().waitFor();
+            }
+            catch (Exception ex) {
+                System.out.println(ex.toString());
+            }
         }
+
     }
 
     public static void copyFile(String sourcePath, String destinationPath,
@@ -110,7 +119,7 @@ public class StartRemotePeers {
 
     private static Process getProcess(String path, RemotePeerInfo pInfo) throws IOException {
         File dir = new File(path +"/local_testing/"+ pInfo.peerId);
-        ProcessBuilder processBuilder = new ProcessBuilder("java", "peerProcess.java", pInfo.peerId);
+        ProcessBuilder processBuilder = new ProcessBuilder("java", "peerProcess", pInfo.peerId);
         processBuilder.directory(dir);
         Process process = processBuilder.start();
         return process;
