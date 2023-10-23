@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Vector;
 
@@ -94,6 +95,8 @@ public class peerProcess {
                     int peerPort = Integer.parseInt(tokens[2]);
                     int hasFile = Integer.parseInt(tokens[3]);
                     boolean hasFileOnStart = hasFile == 1;
+                    // Following my line of thought, we should probably ignore this value unless it's
+                    // the current peer, in which case we should set the bitfield to all 1s
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
                         peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg));
@@ -108,11 +111,15 @@ public class peerProcess {
                                 System.err.println("Error: File " + this.commonCfg.fileName + " does not exist");
                                 System.exit(1);
                             }
-                            int fileSize = this.commonCfg.fileSize;
-                            int pieceSize = this.commonCfg.pieceSize;
-                            int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
+                            int numberOfPieces = this.commonCfg.numPieces;
                             //send bitfield message with all 1s
-                            this.currentPeerThread.bitfield = new BitSet(numberOfPieces);
+                            this.currentPeerThread.bitfield = new boolean[numberOfPieces];
+                            for(int i = 0; i < numberOfPieces; i++) {
+                                this.currentPeerThread.bitfield[i] = true;
+                            }
+                        }
+                        else {
+                            this.currentPeerThread.bitfield = new boolean[this.commonCfg.numPieces];
                         }
                         //currentPeer is just a peer extension of peerProcess that is used to connect to peers before it
                         //client is set to null because it shouldn't be used in any thread context
@@ -195,7 +202,7 @@ public class peerProcess {
         InputStream in;
         Boolean client;
         PeerThread currentPeerThread;
-        BitSet bitfield;
+        boolean[] bitfield;
         CommonCfg commonCfg;
         public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg) {
             super();
@@ -205,6 +212,9 @@ public class peerProcess {
             this.client = client;
             this.currentPeerThread = currentPeerThread;
             this.commonCfg = commonCfg;
+            //Set bitfield to all 0s
+            //all elements are false by default
+            bitfield = new boolean[commonCfg.numPieces];
         }
 
         public PeerThread() {
@@ -239,7 +249,7 @@ public class peerProcess {
 
         byte[] receiveMessage(int expectedLength) throws IOException {
             // Read message of length expectedLength bytes
-            byte[] message = new byte[expectedLength];
+            byte[] message = new byte[expectedLength]; //add +1 later for message type?
             int offset = 0;
 
             while (offset < expectedLength) {
@@ -264,8 +274,9 @@ public class peerProcess {
             } else {
                 server();
             }
-            //at this point the connection is established and we can start sending messages
-            //check if current peer has the file
+            //at this point the connection is established, and we can start sending messages
+            //check if current peer has the file DONE AT STARTUP
+            byte[] bitfieldMessage = Message.generateBitmapMessage(this.currentPeerThread.bitfield);
             //if it does, send a bitfield message with all 1s
             //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
 
@@ -297,27 +308,6 @@ public class peerProcess {
                 System.err.println("Handshake failed");
                 return false;
             }
-
-//            if(this.currentPeerThread.hasFileOnStart) {
-//                File file = new File(this.commonCfg.fileName);
-//                int fileSize = this.commonCfg.fileSize;
-//                int pieceSize = this.commonCfg.pieceSize;
-//                int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
-//
-//                //send bitfield message with all 1s
-//                bitfield = new BitSet(numberOfPieces);
-//                bitfield.set(0, numberOfPieces);
-//                byte[] bitfieldMessage = Message.generateBitmapMessage(bitfield);
-//                //print out each individual bit
-//                for(int i = 0; i < bitfieldMessage.length; i++) {
-//                    for(int j = 0; j < 8; j++) {
-//                        System.out.print((bitfieldMessage[i] >> j) & 1);
-//                    }
-//                }
-//
-//            } else {
-//                //if no file then no bitfield message, can just wait for other peers to send bitfield messages
-//            }
 
             System.err.println("Handshake successful");
             return true;
@@ -391,6 +381,7 @@ public class peerProcess {
         public String fileName;
         public int fileSize;
         public int pieceSize;
+        public int numPieces;
         public CommonCfg(int numberOfPreferredNeighbors, int unchokingInterval, int optimisticUnchokingInterval, String fileName, int fileSize, int pieceSize) {
             this.numberOfPreferredNeighbors = numberOfPreferredNeighbors;
             this.unchokingInterval = unchokingInterval;
@@ -398,6 +389,7 @@ public class peerProcess {
             this.fileName = fileName;
             this.fileSize = fileSize;
             this.pieceSize = pieceSize;
+            this.numPieces = (int) Math.ceil((double) fileSize / pieceSize);
         }
     }
 

@@ -64,19 +64,33 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return handshakePayload;
     }
 
-    public static byte[] generateBitmapMessage(BitSet bitmap) {
+    public static byte[] generateBitmapMessage(boolean[] bitmap) {
         // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
         // 4-byte message length field
-        int bitmapLength = bitmap.toByteArray().length;
+        // Each value in the bitfield is represented as a single bit in the bitfield payload.
+        int messageLength = (int) Math.ceil(bitmap.length / 8.0);
         //message type is 5 aka 00000101
-        byte[] bitmapMessage = new byte[bitmapLength + 5];
+        byte[] bitmapMessage = new byte[messageLength + 5];
         // 4-byte message length field
-        byte[] length = ByteBuffer.allocate(4).putInt(bitmapLength + 1).array();
+        byte[] length = ByteBuffer.allocate(4).putInt(messageLength).array();
         System.arraycopy(length, 0, bitmapMessage, 0, 4);
         // 1-byte message type field
         bitmapMessage[4] = 5;
         // message payload
-        System.arraycopy(bitmap.toByteArray(), 0, bitmapMessage, 5, bitmapLength);
+        for (int i = 0; i < bitmap.length; i++) {
+            if (bitmap[i]) {
+                bitmapMessage[5+(i / 8)] |= (1 << (i % 8));
+                // I hate that I can't read this and I wrote it - Zach
+            }
+        }
+        // Converting the first 4 bytes into messageLength integer
+        //            int value = 0;
+        //            value |= (bitfieldMessage[5] & 0xFF) << 24; // Shift by 24 bits (3 bytes)
+        //            value |= (bitfieldMessage[1] & 0xFF) << 16; // Shift by 16 bits (2 bytes)
+        //            value |= (bitfieldMessage[2] & 0xFF) << 8;  // Shift by 8 bits (1 byte)
+        //            value |= (bitfieldMessage[3] & 0xFF);       // No shift
+        // You can do the same with the message type byte by
+        //            int messageType = bitfieldMessage[4] & 0xFF;
         return bitmapMessage;
     }
 
