@@ -221,6 +221,30 @@ public class peerProcess {
                 ioException.printStackTrace();
             }
         }
+
+        byte[] receiveMessageLength() throws IOException {
+            // Each message (given from specifications) begins with a 4 byte length header
+            // This method reads the length header and returns the message
+            int expectedLength = in.read();  // Assumes a 4-byte length header
+            return receiveMessage(expectedLength);
+        }
+
+        byte[] receiveMessage(int expectedLength) throws IOException {
+            // Read message of length expectedLength bytes
+            byte[] message = new byte[expectedLength];
+            int offset = 0;
+
+            while (offset < expectedLength) {
+                int bytesRead = in.read(message, offset, expectedLength - offset);
+                if (bytesRead == -1) {
+                    throw new IOException("Connection was terminated before message was complete.");
+                }
+                offset += bytesRead;
+            }
+
+            return message;
+        }
+
         @Override
         public void run() {
             System.out.println("Starting connection to peer " + peerId);
@@ -258,15 +282,8 @@ public class peerProcess {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
-            byte[] handshakeMessage = new byte[Message.HANDSHAKE_LENGTH];
-            int offset = 0;
-            while (offset < Message.HANDSHAKE_LENGTH) {
-                int bytesRead = in.read(handshakeMessage, offset, Message.HANDSHAKE_LENGTH - offset);
-                if (bytesRead == -1) {
-                    throw new IOException("Connection was terminated before handshake was complete.");
-                }
-                offset += bytesRead;
-            }
+            byte[] handshakeMessage = receiveMessage(32);
+            //handshake is always 32 bytes
 
             if (!Message.checkHandshake(handshakeMessage, this.peerId)) {
                 System.err.println("Handshake failed");
