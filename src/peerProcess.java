@@ -3,6 +3,7 @@ import java.net.*;
 import java.util.BitSet;
 import java.util.Vector;
 
+
 public class peerProcess {
     // From my understanding the first argument is the peerID, which we can see
     // in PeerInfo.cfg as well as page 7 of the project description pdf
@@ -235,26 +236,6 @@ public class peerProcess {
             //check if current peer has the file
             //if it does, send a bitfield message with all 1s
             //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
-//            if(this.currentPeerThread.hasFileOnStart) {
-//                File file = new File(this.commonCfg.fileName);
-//                int fileSize = this.commonCfg.fileSize;
-//                int pieceSize = this.commonCfg.pieceSize;
-//                int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
-//
-//                //send bitfield message with all 1s
-//                bitfield = new BitSet(numberOfPieces);
-//                bitfield.set(0, numberOfPieces);
-//                byte[] bitfieldMessage = Message.generateBitmapMessage(bitfield);
-//                //print out each individual bit
-//                for(int i = 0; i < bitfieldMessage.length; i++) {
-//                    for(int j = 0; j < 8; j++) {
-//                        System.out.print((bitfieldMessage[i] >> j) & 1);
-//                    }
-//                }
-//
-//            } else {
-//                //if no file then no bitfield message, can just wait for other peers to send bitfield messages
-//            }
 
         }
 
@@ -277,23 +258,41 @@ public class peerProcess {
             in = new DataInputStream(socket.getInputStream());
             out = new DataOutputStream(socket.getOutputStream());
             sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while (true) {
-                if (in.available() > 0) {
-                    bytesRead = in.read(buffer);
-                    byteArrayOutputStream.write(buffer, 0, bytesRead);
-                } else {
-                    break;
+            byte[] handshakeMessage = new byte[Message.HANDSHAKE_LENGTH];
+            int offset = 0;
+            while (offset < Message.HANDSHAKE_LENGTH) {
+                int bytesRead = in.read(handshakeMessage, offset, Message.HANDSHAKE_LENGTH - offset);
+                if (bytesRead == -1) {
+                    throw new IOException("Connection was terminated before handshake was complete.");
                 }
+                offset += bytesRead;
             }
-            outputMessage = byteArrayOutputStream.toByteArray();
 
-            if(!Message.checkHandshake(outputMessage, this.peerId)) {
+            if (!Message.checkHandshake(handshakeMessage, this.peerId)) {
                 System.err.println("Handshake failed");
                 return false;
             }
+
+//            if(this.currentPeerThread.hasFileOnStart) {
+//                File file = new File(this.commonCfg.fileName);
+//                int fileSize = this.commonCfg.fileSize;
+//                int pieceSize = this.commonCfg.pieceSize;
+//                int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
+//
+//                //send bitfield message with all 1s
+//                bitfield = new BitSet(numberOfPieces);
+//                bitfield.set(0, numberOfPieces);
+//                byte[] bitfieldMessage = Message.generateBitmapMessage(bitfield);
+//                //print out each individual bit
+//                for(int i = 0; i < bitfieldMessage.length; i++) {
+//                    for(int j = 0; j < 8; j++) {
+//                        System.out.print((bitfieldMessage[i] >> j) & 1);
+//                    }
+//                }
+//
+//            } else {
+//                //if no file then no bitfield message, can just wait for other peers to send bitfield messages
+//            }
 
             System.err.println("Handshake successful");
             return true;
@@ -342,7 +341,7 @@ public class peerProcess {
                     }
                 }
             }
-           System.err.println("Maximum number of attempts reached. Exiting client.");
+            System.err.println("Maximum number of attempts reached. Exiting client.");
         }
 
 
