@@ -1,6 +1,10 @@
 import java.io.*;
 import java.net.*;
 import java.util.Vector;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
 
 public class peerProcess {
     // From my understanding the first argument is the peerID, which we can see
@@ -26,7 +30,30 @@ public class peerProcess {
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
 
+    // create logger variable
+    private static Logger logger = Logger.getLogger("MyLog");
+
+    /*
+    initializes logger. not quite sure if it will work but plan is to pass peerID in as a parameter to init
+    to be used in the name of the log file (line 44) so it can log to that peer's respective log file. So it would be
+    something like new FileHandler("log_peer_" + peerID + ".log"). Need to be further along in implementation to try
+     */
+    public static void init(int peerID) {
+        FileHandler fh;
+        try {
+            fh = new FileHandler("MyLogFile.log");
+
+            logger.addHandler(fh);
+            SimpleFormatter formatter = new SimpleFormatter();
+            fh.setFormatter(formatter);
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Exception ::", e);
+        }
+    }
+
     public static void main(String[] args) {
+        init();
+        logger.info("logger initialized");
         // Check for first argument
         if (args.length < 1) {
             System.out.println("Error: Missing peer ID argument");
