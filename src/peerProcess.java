@@ -96,11 +96,24 @@ public class peerProcess {
                     boolean hasFileOnStart = hasFile == 1;
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg,hasFileOnStart));
+                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
                         this.currentPeerThread.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeerThread, null);
+                        if(hasFileOnStart) {
+                            // If currentPeerThread has the file (indicated in PeerInfo.cfg), set the bitfield to all 1s
+                            File file = new File(this.commonCfg.fileName);
+                            if(!file.exists()) {
+                                System.err.println("Error: File " + this.commonCfg.fileName + " does not exist");
+                                System.exit(1);
+                            }
+                            int fileSize = this.commonCfg.fileSize;
+                            int pieceSize = this.commonCfg.pieceSize;
+                            int numberOfPieces = (int) Math.ceil((double) fileSize / pieceSize);
+                            //send bitfield message with all 1s
+                            this.currentPeerThread.bitfield = new BitSet(numberOfPieces);
+                        }
                         //currentPeer is just a peer extension of peerProcess that is used to connect to peers before it
                         //client is set to null because it shouldn't be used in any thread context
                         foundCurrentPeer = true;
@@ -184,7 +197,7 @@ public class peerProcess {
         PeerThread currentPeerThread;
         BitSet bitfield;
         CommonCfg commonCfg;
-        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg, boolean hasFileOnStart) {
+        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg) {
             super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
