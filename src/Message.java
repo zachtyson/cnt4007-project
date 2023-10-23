@@ -64,6 +64,45 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return handshakePayload;
     }
 
+    public static byte[] generateHeaderAndMessageType(int messageLength, MsgType msgType) {
+        // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
+        byte[] headerAndMessageType = new byte[5];
+        // 4-byte message length field
+        byte[] length = ByteBuffer.allocate(4).putInt(messageLength).array();
+        System.arraycopy(length, 0, headerAndMessageType, 0, 4);
+        // 1-byte message type field
+        switch (msgType) {
+            case choke:
+                headerAndMessageType[4] = 0;
+                break;
+            case unchoke:
+                headerAndMessageType[4] = 1;
+                break;
+            case interested:
+                headerAndMessageType[4] = 2;
+                break;
+            case notInterested:
+                headerAndMessageType[4] = 3;
+                break;
+            case have:
+                headerAndMessageType[4] = 4;
+                break;
+            case bitfield:
+                headerAndMessageType[4] = 5;
+                break;
+            case request:
+                headerAndMessageType[4] = 6;
+                break;
+            case piece:
+                headerAndMessageType[4] = 7;
+                break;
+            default:
+                System.out.println("Invalid message type");
+                System.exit(0);
+        }
+        return headerAndMessageType;
+    }
+
     public static byte[] generateBitmapMessage(boolean[] bitmap) {
         // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
         // 4-byte message length field
@@ -71,16 +110,15 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         int messageLength = (int) Math.ceil(bitmap.length / 8.0);
         //message type is 5 aka 00000101
         byte[] bitmapMessage = new byte[messageLength + 5];
-        // 4-byte message length field
-        byte[] length = ByteBuffer.allocate(4).putInt(messageLength).array();
-        System.arraycopy(length, 0, bitmapMessage, 0, 4);
-        // 1-byte message type field
-        bitmapMessage[4] = 5;
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.bitfield);
+        System.arraycopy(headerAndMessageType, 0, bitmapMessage, 0, 5);
+
         // message payload
         for (int i = 0; i < bitmap.length; i++) {
             if (bitmap[i]) {
-                bitmapMessage[5+(i / 8)] |= (1 << (i % 8));
+                bitmapMessage[5+(i / 8)] |= (1 << (7 - (i % 8)));
                 // I hate that I can't read this and I wrote it - Zach
+                // this should convert a bitmap into something like 11111000 (for a full bitmap, note the trailing zeroes to make a byte)
             }
         }
         // Converting the first 4 bytes into messageLength integer
