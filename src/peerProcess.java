@@ -202,6 +202,58 @@ public class peerProcess {
         PeerConnection currentPeerConnection;
         boolean[] bitfield;
         CommonCfg commonCfg;
+        SendHandler sendHandler;
+        ReceiveHandler receiveHandler;
+        public static class SendHandler extends Thread {
+            PeerConnection peerConnection;
+            SendHandler(PeerConnection peerConnection) {
+                this.peerConnection = peerConnection;
+            }
+            public void run() {
+            }
+            void sendMessage(byte[] msg) {
+                try {
+                    //stream write the message
+                    peerConnection.out.write(msg);
+                    peerConnection.out.flush();
+                    System.out.println("Sent message to peer " + peerConnection.peerId);
+                } catch (IOException ioException) {
+                    ioException.printStackTrace();
+                }
+            }
+
+        }
+        public static class ReceiveHandler extends Thread{
+            PeerConnection peerConnection;
+            ReceiveHandler(PeerConnection peerConnection) {
+                this.peerConnection = peerConnection;
+            }
+            public void run() {
+            }
+            byte[] receiveMessageLength() throws IOException {
+                // Each message (given from specifications) begins with a 4 byte length header
+                // This method reads the length header and returns the message
+                int expectedLength = peerConnection.in.read();  // Assumes a 4-byte length header
+                return receiveMessage(expectedLength);
+            }
+
+            byte[] receiveMessage(int expectedLength) throws IOException {
+                // Read message of length expectedLength bytes
+                byte[] message = new byte[expectedLength]; //add +1 later for message type?
+                int offset = 0;
+
+                while (offset < expectedLength) {
+                    int bytesRead = peerConnection.in.read(message, offset, expectedLength - offset);
+                    if (bytesRead == -1) {
+                        throw new IOException("Connection was terminated before message was complete.");
+                    }
+                    offset += bytesRead;
+                }
+
+                return message;
+            }
+        }
+
         public PeerConnection(int peerId, String peerAddress, int peerPort, PeerConnection currentPeerConnection, Boolean client, CommonCfg commonCfg) {
             super();
             this.peerId = peerId;
