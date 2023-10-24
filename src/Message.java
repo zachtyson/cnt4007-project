@@ -103,6 +103,11 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return headerAndMessageType;
     }
 
+    public static byte[] generateChokeMessage() {
+        // 4-byte message length field, 1-byte message type field, and no message payload.
+        return generateHeaderAndMessageType(1, MsgType.choke);
+    }
+
     public static byte[] generateBitmapMessage(boolean[] bitmap) {
         // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
         // 4-byte message length field
