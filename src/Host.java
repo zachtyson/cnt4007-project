@@ -29,7 +29,7 @@ public class Host {
             Socket Client = serverSocket.accept();
             Clients.add(Client);
            // create thread to handle client 
-            Thread t = new Thread(new ClientHandler(Client));
+            Thread t = new Thread(new ClientHandler(Client,serverSocket));
             t.start();
         }
        

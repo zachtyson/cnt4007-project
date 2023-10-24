@@ -1,13 +1,18 @@
+import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class ClientHandler extends Thread {
     Socket clientSocket;
-    public ClientHandler (Socket clientSocket) {
+    ServerSocket Host; 
+    public ClientHandler (Socket clientSocket, ServerSocket Host) {
         this.clientSocket = clientSocket;
+        this.Host = Host;
     }
 
     public void run () {
-        // get the message from the client 
-        // send the message to all the other clients 
+       ArrayList<Boolean> bitMessage = new ArrayList<Boolean>();
+       
+       
     }
 }
