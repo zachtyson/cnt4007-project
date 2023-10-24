@@ -1,7 +1,5 @@
 import java.io.*;
 import java.net.*;
-import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Vector;
 
 
@@ -55,34 +53,34 @@ public class peerProcess {
 
     public peerProcess(int currentPeerID) {
         getCommon();
-        this.peerThreadVector = getPeers(currentPeerID);
+        this.peerConnectionVector = getPeers(currentPeerID);
         System.out.println("Peer " + currentPeerID + " has the following peers:");
-        for(PeerThread peerThread : peerThreadVector) {
-            System.out.println("Peer " + peerThread.peerId + " at " + peerThread.peerAddress + ":" + peerThread.peerPort);
-            peerThread.start();
+        for(PeerConnection peerConnection : peerConnectionVector) {
+            System.out.println("Peer " + peerConnection.peerId + " at " + peerConnection.peerAddress + ":" + peerConnection.peerPort);
+            peerConnection.start();
         }
     }
-    public PeerThread currentPeerThread;
-    public Vector<PeerThread> peerThreadVector;
+    public PeerConnection currentPeerConnection;
+    public Vector<PeerConnection> peerConnectionVector;
     public CommonCfg commonCfg;
 
     public void close() {
         // Close all connections
-        for(PeerThread peerThread : peerThreadVector) {
-            peerThread.close();
+        for(PeerConnection peerConnection : peerConnectionVector) {
+            peerConnection.close();
         }
-        if(this.currentPeerThread != null) {
-            this.currentPeerThread.close();
+        if(this.currentPeerConnection != null) {
+            this.currentPeerConnection.close();
         }
     }
 
     //"PeerInfo.cfg"
-    public Vector <PeerThread> getPeers(int currentPeerID){
+    public Vector <PeerConnection> getPeers(int currentPeerID){
         // Read PeerInfo.cfg
-        Vector<PeerThread> peerThreadVector = new Vector<>();
+        Vector<PeerConnection> peerConnectionVector = new Vector<>();
         String currLine;
-        this.currentPeerThread = new PeerThread();
-        this.currentPeerThread.commonCfg = this.commonCfg;
+        this.currentPeerConnection = new PeerConnection();
+        this.currentPeerConnection.commonCfg = this.commonCfg;
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             boolean foundCurrentPeer = false;
@@ -99,11 +97,11 @@ public class peerProcess {
                     // the current peer, in which case we should set the bitfield to all 1s
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerThreadVector.addElement(new PeerThread(tempPeerID, tokens[1], peerPort, this.currentPeerThread, !foundCurrentPeer,commonCfg));
+                        peerConnectionVector.addElement(new PeerConnection(tempPeerID, tokens[1], peerPort, this.currentPeerConnection, !foundCurrentPeer,commonCfg));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
-                        this.currentPeerThread.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeerThread, null);
+                        this.currentPeerConnection.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeerConnection, null);
                         if(hasFileOnStart) {
                             // If currentPeerThread has the file (indicated in PeerInfo.cfg), set the bitfield to all 1s
                             File file = new File(this.commonCfg.fileName);
@@ -113,13 +111,13 @@ public class peerProcess {
                             }
                             int numberOfPieces = this.commonCfg.numPieces;
                             //send bitfield message with all 1s
-                            this.currentPeerThread.bitfield = new boolean[numberOfPieces];
+                            this.currentPeerConnection.bitfield = new boolean[numberOfPieces];
                             for(int i = 0; i < numberOfPieces; i++) {
-                                this.currentPeerThread.bitfield[i] = true;
+                                this.currentPeerConnection.bitfield[i] = true;
                             }
                         }
                         else {
-                            this.currentPeerThread.bitfield = new boolean[this.commonCfg.numPieces];
+                            this.currentPeerConnection.bitfield = new boolean[this.commonCfg.numPieces];
                         }
                         //currentPeer is just a peer extension of peerProcess that is used to connect to peers before it
                         //client is set to null because it shouldn't be used in any thread context
@@ -135,7 +133,7 @@ public class peerProcess {
         } catch (Exception ex) {
             System.out.println(ex.toString());
         }
-        return peerThreadVector;
+        return peerConnectionVector;
     }
 
     private void getCommon() {
@@ -193,7 +191,7 @@ public class peerProcess {
             System.out.println(ex.toString());
         }
     }
-    public static class PeerThread extends Thread{
+    public static class PeerConnection extends Thread{
         public int peerId;
         public String peerAddress;
         public int peerPort;
@@ -201,32 +199,32 @@ public class peerProcess {
         OutputStream out;
         InputStream in;
         Boolean client;
-        PeerThread currentPeerThread;
+        PeerConnection currentPeerConnection;
         boolean[] bitfield;
         CommonCfg commonCfg;
-        public PeerThread(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client, CommonCfg commonCfg) {
+        public PeerConnection(int peerId, String peerAddress, int peerPort, PeerConnection currentPeerConnection, Boolean client, CommonCfg commonCfg) {
             super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
-            this.currentPeerThread = currentPeerThread;
+            this.currentPeerConnection = currentPeerConnection;
             this.commonCfg = commonCfg;
             //Set bitfield to all 0s
             //all elements are false by default
             bitfield = new boolean[commonCfg.numPieces];
         }
 
-        public PeerThread() {
+        public PeerConnection() {
             super();
         }
 
-        public void setPeerValues(int peerId, String peerAddress, int peerPort, PeerThread currentPeerThread, Boolean client) {
+        public void setPeerValues(int peerId, String peerAddress, int peerPort, PeerConnection currentPeerConnection, Boolean client) {
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
-            this.currentPeerThread = currentPeerThread;
+            this.currentPeerConnection = currentPeerConnection;
         }
 
         void sendMessage(byte[] msg) {
@@ -276,7 +274,7 @@ public class peerProcess {
             }
             //at this point the connection is established, and we can start sending messages
             //check if current peer has the file DONE AT STARTUP
-            byte[] bitfieldMessage = Message.generateBitmapMessage(this.currentPeerThread.bitfield);
+            byte[] bitfieldMessage = Message.generateBitmapMessage(this.currentPeerConnection.bitfield);
 //            for (byte b : bitfieldMessage) {
 //                String bits = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
 //                System.out.print(bits + " ");
@@ -288,7 +286,7 @@ public class peerProcess {
         }
 
         public void server() {
-            try (ServerSocket serverSocket = new ServerSocket(this.currentPeerThread.peerPort)) {
+            try (ServerSocket serverSocket = new ServerSocket(this.currentPeerConnection.peerPort)) {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 socket = serverSocket.accept();
                 System.out.println("Connected to " + socket.getRemoteSocketAddress());
@@ -305,7 +303,7 @@ public class peerProcess {
         }
 
         private boolean peerHandshake() throws IOException {
-            sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
+            sendMessage(Message.createHandshakePayload(this.currentPeerConnection.peerId));
             byte[] handshakeMessage = receiveMessage(32);
             //handshake is always 32 bytes
 
