@@ -52,35 +52,75 @@ public class peerProcess {
     }
 
     public peerProcess(int currentPeerID) {
-        getCommon();
-        this.peerConnectionVector = getPeers(currentPeerID);
+        try {
+            getCommon();
+            this.peerConnectionVector = getPeers(currentPeerID);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Vector<PeerConnection> waitFor = new Vector<>();
+        for(PeerConnection peerConnection : peerConnectionVector) {
+            if(!peerConnection.client) {
+                waitFor.addElement(peerConnection);
+            }
+        }
+
         System.out.println("Peer " + currentPeerID + " has the following peers:");
         for(PeerConnection peerConnection : peerConnectionVector) {
             System.out.println("Peer " + peerConnection.peerId + " at " + peerConnection.peerAddress + ":" + peerConnection.peerPort);
             peerConnection.start();
         }
     }
-    public PeerConnection currentPeerConnection;
+
+    public void startListening() {
+        ServerSocketThread serverSocketThread = new ServerSocketThread(this.selfPeerPort, this);
+        serverSocketThread.start();
+    }
+
+    public class ServerSocketThread extends Thread {
+        private int port;
+        private ServerSocket serverSocket;
+        private peerProcess hostProcess;
+
+        public ServerSocketThread(int port, peerProcess hostProcess) {
+            this.port = port;
+            this.hostProcess = hostProcess;
+        }
+
+        @Override
+        public void run() {
+            try (ServerSocket serverSocket = new ServerSocket(port)) {
+                System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
+                Socket socket = serverSocket.accept();
+                System.out.println("Connected to " + socket.getRemoteSocketAddress());
+                if(!peerHandshake(socket, this.hostProcess.selfPeerId)) {
+                    System.exit(1);
+                    close();  // Close connections when finished or in case of an error
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     public Vector<PeerConnection> peerConnectionVector;
     public CommonCfg commonCfg;
-
+    public int selfPeerId;
+    public String selfPeerAddress;
+    public int selfPeerPort;
+    boolean[] selfBitfield;
+    ServerSocket serverSocket;
     public void close() {
         // Close all connections
         for(PeerConnection peerConnection : peerConnectionVector) {
             peerConnection.close();
         }
-        if(this.currentPeerConnection != null) {
-            this.currentPeerConnection.close();
-        }
     }
 
     //"PeerInfo.cfg"
-    public Vector <PeerConnection> getPeers(int currentPeerID){
+    public Vector <PeerConnection> getPeers(int currentPeerID) throws IOException {
         // Read PeerInfo.cfg
         Vector<PeerConnection> peerConnectionVector = new Vector<>();
         String currLine;
-        this.currentPeerConnection = new PeerConnection();
-        this.currentPeerConnection.commonCfg = this.commonCfg;
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             boolean foundCurrentPeer = false;
@@ -97,28 +137,10 @@ public class peerProcess {
                     // the current peer, in which case we should set the bitfield to all 1s
                     if(tempPeerID != currentPeerID) {
                         // If peer ID is not the same as the current peer, add it to the vector
-                        peerConnectionVector.addElement(new PeerConnection(tempPeerID, tokens[1], peerPort, this.currentPeerConnection, !foundCurrentPeer,commonCfg));
+                        peerConnectionVector.addElement(new PeerConnection(tempPeerID, tokens[1], peerPort, this, !foundCurrentPeer, commonCfg));
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it
                         // 'before it' is defined as that are already in the vector
-                        this.currentPeerConnection.setPeerValues(tempPeerID, tokens[1], peerPort, this.currentPeerConnection, null);
-                        if(hasFileOnStart) {
-                            // If currentPeerThread has the file (indicated in PeerInfo.cfg), set the bitfield to all 1s
-                            File file = new File(this.commonCfg.fileName);
-                            if(!file.exists()) {
-                                System.err.println("Error: File " + this.commonCfg.fileName + " does not exist");
-                                System.exit(1);
-                            }
-                            int numberOfPieces = this.commonCfg.numPieces;
-                            //send bitfield message with all 1s
-                            this.currentPeerConnection.bitfield = new boolean[numberOfPieces];
-                            for(int i = 0; i < numberOfPieces; i++) {
-                                this.currentPeerConnection.bitfield[i] = true;
-                            }
-                        }
-                        else {
-                            this.currentPeerConnection.bitfield = new boolean[this.commonCfg.numPieces];
-                        }
                         //currentPeer is just a peer extension of peerProcess that is used to connect to peers before it
                         //client is set to null because it shouldn't be used in any thread context
                         foundCurrentPeer = true;
@@ -199,11 +221,11 @@ public class peerProcess {
         OutputStream out;
         InputStream in;
         Boolean client;
-        PeerConnection currentPeerConnection;
         boolean[] bitfield;
         CommonCfg commonCfg;
         SendHandler sendHandler;
         ReceiveHandler receiveHandler;
+        peerProcess hostProcess;
         public static class SendHandler extends Thread {
             PeerConnection peerConnection;
             SendHandler(PeerConnection peerConnection) {
@@ -254,63 +276,25 @@ public class peerProcess {
             }
         }
 
-        public PeerConnection(int peerId, String peerAddress, int peerPort, PeerConnection currentPeerConnection, Boolean client, CommonCfg commonCfg) {
+        public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, CommonCfg commonCfg) {
             super();
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
-            this.currentPeerConnection = currentPeerConnection;
+            this.hostProcess = hostProcess;
             this.commonCfg = commonCfg;
             //Set bitfield to all 0s
             //all elements are false by default
             bitfield = new boolean[commonCfg.numPieces];
         }
 
-        public PeerConnection() {
-            super();
-        }
-
-        public void setPeerValues(int peerId, String peerAddress, int peerPort, PeerConnection currentPeerConnection, Boolean client) {
+        public void setPeerValues(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client) {
             this.peerId = peerId;
             this.peerAddress = peerAddress;
             this.peerPort = peerPort;
             this.client = client;
-            this.currentPeerConnection = currentPeerConnection;
-        }
-
-        void sendMessage(byte[] msg) {
-            try {
-                //stream write the message
-                out.write(msg);
-                out.flush();
-                System.out.println("Sent message to peer " + peerId);
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
-        }
-
-        byte[] receiveMessageLength() throws IOException {
-            // Each message (given from specifications) begins with a 4 byte length header
-            // This method reads the length header and returns the message
-            int expectedLength = in.read();  // Assumes a 4-byte length header
-            return receiveMessage(expectedLength);
-        }
-
-        byte[] receiveMessage(int expectedLength) throws IOException {
-            // Read message of length expectedLength bytes
-            byte[] message = new byte[expectedLength]; //add +1 later for message type?
-            int offset = 0;
-
-            while (offset < expectedLength) {
-                int bytesRead = in.read(message, offset, expectedLength - offset);
-                if (bytesRead == -1) {
-                    throw new IOException("Connection was terminated before message was complete.");
-                }
-                offset += bytesRead;
-            }
-
-            return message;
+            this.hostProcess = hostProcess;
         }
 
         @Override
@@ -326,7 +310,7 @@ public class peerProcess {
             }
             //at this point the connection is established, and we can start sending messages
             //check if current peer has the file DONE AT STARTUP
-            byte[] bitfieldMessage = Message.generateBitmapMessage(this.currentPeerConnection.bitfield);
+            byte[] bitfieldMessage = Message.generateBitmapMessage(this.hostProcess.selfBitfield);
 //            for (byte b : bitfieldMessage) {
 //                String bits = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
 //                System.out.print(bits + " ");
@@ -352,20 +336,6 @@ public class peerProcess {
                 e.printStackTrace();
             }
             System.err.println("Exiting client.");
-        }
-
-        private boolean peerHandshake() throws IOException {
-            sendMessage(Message.createHandshakePayload(this.currentPeerConnection.peerId));
-            byte[] handshakeMessage = receiveMessage(32);
-            //handshake is always 32 bytes
-
-            if (!Message.checkHandshake(handshakeMessage, this.peerId)) {
-                System.err.println("Handshake failed");
-                return false;
-            }
-
-            System.err.println("Handshake successful");
-            return true;
         }
 
 
@@ -425,6 +395,55 @@ public class peerProcess {
                 System.err.println("Error closing resources for peer " + peerId + ": " + e.getMessage());
             }
         }
+    }
+
+    static void sendMessage(Socket socket, byte[] msg) {
+        try {
+            //stream write the message
+            OutputStream out = socket.getOutputStream();
+            out.write(msg);
+            out.flush();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+    }
+
+    static byte[] receiveMessageLength(Socket socket) throws IOException {
+        // Each message (given from specifications) begins with a 4 byte length header
+        // This method reads the length header and returns the message
+        InputStream in = socket.getInputStream();
+        int expectedLength = in.read();  // Assumes a 4-byte length header
+        return receiveMessage(socket, expectedLength);
+    }
+
+    static byte[] receiveMessage(Socket socket, int expectedLength) throws IOException {
+        // Read message of length expectedLength bytes
+        byte[] message = new byte[expectedLength]; //add +1 later for message type?
+        int offset = 0;
+        InputStream in = socket.getInputStream();
+        while (offset < expectedLength) {
+            int bytesRead = in.read(message, offset, expectedLength - offset);
+            if (bytesRead == -1) {
+                throw new IOException("Connection was terminated before message was complete.");
+            }
+            offset += bytesRead;
+        }
+
+        return message;
+    }
+
+    static private int peerHandshake(Socket s,int peerId) throws IOException {
+        sendMessage(s,Message.createHandshakePayload(peerId));
+        byte[] handshakeMessage = receiveMessage(s,32);
+        //handshake is always 32 bytes
+
+        if (!Message.checkHandshake(handshakeMessage, peerId)) {
+            System.err.println("Handshake failed");
+            return -1;
+        }
+
+        System.err.println("Handshake successful");
+        return true;
     }
 
     public static class CommonCfg {
