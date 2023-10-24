@@ -277,6 +277,11 @@ public class peerProcess {
             //at this point the connection is established, and we can start sending messages
             //check if current peer has the file DONE AT STARTUP
             byte[] bitfieldMessage = Message.generateBitmapMessage(this.currentPeerThread.bitfield);
+//            for (byte b : bitfieldMessage) {
+//                String bits = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
+//                System.out.print(bits + " ");
+//            }
+//            System.out.println(); // New line after printing all bytes
             //if it does, send a bitfield message with all 1s
             //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
             close();
@@ -312,21 +317,6 @@ public class peerProcess {
             System.err.println("Handshake successful");
             return true;
         }
-
-        int temp1 = 0;
-        int temp11 = 0;
-        int temp12 = 0;
-        int temp13 = 0;
-        int temp14 = 0;
-        int temp15 = 0;
-        int temp16 = 0;
-        int temp17 = 0;
-        int temp18 = 0;
-        int temp19 = 0;
-        int temp111 = 0;
-        int temp122 = 0;
-        int temp133 = 0;
-        int temp144 = 0;
 
 
         public void client() {
