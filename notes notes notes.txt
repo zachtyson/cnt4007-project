@@ -1,0 +1,4 @@
+https://docs.oracle.com/javase/tutorial/networking/sockets/clientServer.html
+
+https://docs.oracle.com/javase/tutorial/networking/datagrams/index.html
+https://docs.oracle.com/javase/tutorial/displayCode.html?code=https://docs.oracle.com/javase/tutorial/networking/sockets/examples/KKMultiServerThread.java
