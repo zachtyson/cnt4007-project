@@ -50,7 +50,7 @@ public class peerProcess {
         // Create a new peerProcess object
         peerProcess currentPeerProcess = new peerProcess(ID);
         //A peer process is terminated when it finds out that all the peers, not just itself, have downloaded the complete file.
-        currentPeerProcess.close();
+        //currentPeerProcess.close();
     }
 
     public peerProcess(int currentPeerID) {
@@ -279,7 +279,7 @@ public class peerProcess {
             byte[] bitfieldMessage = Message.generateBitmapMessage(this.currentPeerThread.bitfield);
             //if it does, send a bitfield message with all 1s
             //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
-
+            close();
         }
 
         public void server() {
@@ -287,19 +287,19 @@ public class peerProcess {
                 System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                 socket = serverSocket.accept();
                 System.out.println("Connected to " + socket.getRemoteSocketAddress());
+                in = new DataInputStream(socket.getInputStream());
+                out = new DataOutputStream(socket.getOutputStream());
                 if(!peerHandshake()) {
                     System.exit(1);
+                    close();  // Close connections when finished or in case of an error
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } finally {
-                close();  // Close connections when finished or in case of an error
             }
+            System.err.println("Exiting client.");
         }
 
         private boolean peerHandshake() throws IOException {
-            in = new DataInputStream(socket.getInputStream());
-            out = new DataOutputStream(socket.getOutputStream());
             sendMessage(Message.createHandshakePayload(this.currentPeerThread.peerId));
             byte[] handshakeMessage = receiveMessage(32);
             //handshake is always 32 bytes
@@ -316,17 +316,22 @@ public class peerProcess {
         public void client() {
             int numberOfRetries = 5;  // specify the maximum number of retries
             int timeBetweenRetries = 5000;  // specify the time to wait between retries in milliseconds
-
-            for(int attempt = 0; attempt < numberOfRetries; attempt++) {
+            int attempt = 0;
+            for(attempt = 0; attempt < numberOfRetries; attempt++) {
                 try{
                     //create a socket to connect to the server
                     String address = this.peerAddress;
                     int port = this.peerPort;
                     System.out.println("Attempting to connect to " + address + " in port " + port);
                     socket = new Socket(address, port);
+                    in = new DataInputStream(socket.getInputStream());
+                    out = new DataOutputStream(socket.getOutputStream());
                     System.out.println("Connected to " + address + " in port " + port);
                     //initialize inputStream and outputStream
-                    peerHandshake();
+                    if(!peerHandshake()) {
+                        System.exit(1);
+                        close();  // Close connections when finished or in case of an error
+                    }
                     break;
                 }
                 catch (ConnectException e) {
@@ -344,32 +349,24 @@ public class peerProcess {
                 catch(IOException ioException){
                     ioException.printStackTrace();
                 }
-                finally{
-                    //Close connections
-                    try{
-                        if (in != null) in.close();
-                        if (out != null) out.close();
-                        if (socket != null) socket.close();
-                    }
-                    catch(IOException ioException){
-                        ioException.printStackTrace();
-                    }
-                }
             }
-            System.err.println("Maximum number of attempts reached. Exiting client.");
+            if(attempt == numberOfRetries) {
+                System.err.println("Maximum number of attempts reached. Exiting client.");
+            }
+            System.err.println("Exiting client.");
         }
 
 
         // Prepares the peer to be closed for the program to terminate
         public void close() {
             //Close the socket
-            if (socket != null && !socket.isClosed()) {
-                try {
-                    socket.close();
-                    System.out.println("Socket to peer " + peerId + " closed");
-                } catch (IOException e) {
-                    System.err.println("Error closing socket to peer " + peerId + ": " + e.getMessage());
-                }
+            System.err.println("Closing connection to peer " + peerId);
+            try {
+                if (out != null) out.close();
+                if (in != null) in.close();
+                if (socket != null) socket.close();
+            } catch (IOException e) {
+                System.err.println("Error closing resources for peer " + peerId + ": " + e.getMessage());
             }
         }
     }
