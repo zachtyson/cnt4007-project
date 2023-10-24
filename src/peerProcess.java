@@ -432,19 +432,19 @@ public class peerProcess {
         return message;
     }
 
-    static private int peerHandshake(Socket s,int peerId) throws IOException {
-        sendMessage(s,Message.createHandshakePayload(peerId));
-        byte[] handshakeMessage = receiveMessage(s,32);
-        //handshake is always 32 bytes
-
-        if (!Message.checkHandshake(handshakeMessage, peerId)) {
-            System.err.println("Handshake failed");
-            return -1;
-        }
-
-        System.err.println("Handshake successful");
-        return true;
-    }
+//    static private int peerHandshake(Socket s,int peerId) throws IOException {
+//        sendMessage(s,Message.createHandshakePayload(peerId));
+//        byte[] handshakeMessage = receiveMessage(s,32);
+//        //handshake is always 32 bytes
+//
+//        if (!Message.checkHandshake(handshakeMessage, peerId)) {
+//            System.err.println("Handshake failed");
+//            return -1;
+//        }
+//
+//
+//        return true;
+//    }
 
     public static class CommonCfg {
         public int numberOfPreferredNeighbors;
