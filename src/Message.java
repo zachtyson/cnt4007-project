@@ -112,6 +112,14 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return generateHeaderAndMessageType(0, MsgType.unchoke);
     }
 
+    public static byte[] generateInterestedMessage() {
+        return generateHeaderAndMessageType(0, MsgType.interested);
+    }
+
+    public static byte[] generateNotInterestedMessage() {
+        return generateHeaderAndMessageType(0, MsgType.notInterested);
+    }
+
 
     public static byte[] generateBitmapMessage(boolean[] bitmap) {
         // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
