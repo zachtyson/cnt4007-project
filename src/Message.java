@@ -65,6 +65,14 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         msgInterpret();
     }
     //checks that the msg is valid and has the correct payload for the msg type
+    int temp1 = 0;
+    int temp2 = 0;
+    int temp3 = 0;
+    int temp4 = 0;
+    int temp5 = 0;
+    int temp6 = 0;
+    int temp7 = 0;
+
     private void msgInterpret(){
         //4-byte message length field, 1-byte message type field, and a messag payload with variable size.
         byte[] temp = new byte[4];

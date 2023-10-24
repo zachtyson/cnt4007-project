@@ -50,7 +50,7 @@ public class peerProcess {
         currentPeerProcess.close();
     }
 
-    public peerProcess(int currentPeerID) {
+    public peerProcess(int currentPeerID) { //is this where the peer process starts?
         this.peerVector = getPeers(currentPeerID);
         System.out.println("Peer " + currentPeerID + " has the following peers:");
         for(Peer peer : peerVector) {
@@ -209,13 +209,27 @@ public class peerProcess {
             }
         }
 
+        int temp1 = 0;
+        int temp2 = 0;
+        int temp3 = 0;
+        int temp4 = 0;
+        int temp5 = 0;
+        int temp6 = 0;
+        int temp7 = 0;
+        int temp8 = 0;
+        int temp9 = 0;
+        int temp10 = 0;
+        int temp11 = 0;
+        int temp12 = 0;
+        int temp13 = 0;
+        int temp14 = 0;
+
         public String generateHandshake() {
             String handshake = "P2PFILESHARINGPROJ";
             handshake += "0000000000";
             handshake += this.currentPeer.peerId;
             return handshake;
         }
-
         public boolean checkHandshake(String handshake) {
             System.out.println(handshake);
             if(handshake.length() != 32) {
