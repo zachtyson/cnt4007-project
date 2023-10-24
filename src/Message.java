@@ -154,6 +154,25 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return peerID == expectedPeerID;
     }
 
+    public static int getIDFromHandshake(byte[] handshake) {
+        if (handshake.length != 32) {
+            return -1;
+        }
+        ByteBuffer buffer = ByteBuffer.wrap(handshake);
+        byte[] p2pHeader = new byte[18];
+        buffer.get(p2pHeader, 0, 18);
+        if (!Arrays.equals(p2pHeader, "P2PFILESHARINGPROJ".getBytes())) {
+            return -1;
+        }
+        // Check bytes 19-27 for zeros
+        for (int i = 0; i < 10; i++) {
+            if (buffer.get() != 0) {
+                return -1;
+            }
+        }
+        return buffer.getInt();
+    }
+
     // makes rest
 //    public Message(Byte[] payload){
 //        this.payload = payload;
