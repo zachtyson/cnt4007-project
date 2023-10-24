@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class Host {
     int PortLimit = 0;
     // each message sent 
-    ArrayList<Boolean> Message = new ArrayList<Boolean>();
+    ArrayList<Boolean> bitfield = new ArrayList<Boolean>();
     // the different clients that are connected to the host 
     ArrayList<Socket> Clients = new ArrayList<Socket>();
     ServerSocket serverSocket; 
@@ -28,7 +28,9 @@ public class Host {
         {
             Socket Client = serverSocket.accept();
             Clients.add(Client);
-           
+           // create thread to handle client 
+            Thread t = new Thread(new ClientHandler(Client));
+            t.start();
         }
        
     } 
