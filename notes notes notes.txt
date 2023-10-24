@@ -2,3 +2,11 @@ https://docs.oracle.com/javase/tutorial/networking/sockets/clientServer.html
 
 https://docs.oracle.com/javase/tutorial/networking/datagrams/index.html
 https://docs.oracle.com/javase/tutorial/displayCode.html?code=https://docs.oracle.com/javase/tutorial/networking/sockets/examples/KKMultiServerThread.java
+
+
+every unit will need a host and client process - > the host will control who connects to it and serving them their needs 
+while the client process will look to connect if the host doesnt already have the completed file 
+a messages class for implementation and interpretation of the messages thats accessible by everything in a unit will speed this along 
+and the unit will need a controller that handles the file itself, storage and overall managment of what metthods its using 
+
+the start remote peer process will accept conncetions from all peers and terminate once all have given it the signal that theyve completed the download 
