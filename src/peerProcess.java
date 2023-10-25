@@ -79,32 +79,30 @@ public class peerProcess {
     public static class ServerSocketThread extends Thread {
         private final int port;
         private final peerProcess hostProcess;
-        private volatile boolean isRunning = true; // Control flag for the loop
 
         public ServerSocketThread(int port, peerProcess hostProcess) {
             this.port = port;
             this.hostProcess = hostProcess;
         }
 
-        public void stopThread() {
-            isRunning = false;
-        }
-
         @Override
         public void run() {
-            Vector<PeerConnection> peerServerWaitVector = this.hostProcess.peerConnectionVector;
             Vector<PeerConnection> serverWait = new Vector<>();
-            for(PeerConnection peerConnection : peerServerWaitVector) {
+            for(PeerConnection peerConnection : this.hostProcess.peerConnectionVector) {
                 if(!peerConnection.client) {
                     serverWait.add(peerConnection);
                 }
             }
+//            for(PeerConnection peerConnection : serverWait) {
+//                System.err.println(peerConnection.peerId);
+//            }
             if(serverWait.isEmpty()) {
                 System.out.println("No peers to wait for");
+                //terminate thread
                 return;
             }
             try (ServerSocket serverSocket = new ServerSocket(port)) {
-                while(isRunning) {
+                while(true) {
                     System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                     Socket socket = serverSocket.accept();
                     System.out.println("Connected to " + socket.getRemoteSocketAddress());
@@ -129,17 +127,18 @@ public class peerProcess {
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
-                            peerServerWaitVector.remove(peerConnection);
+                            serverWait.remove(peerConnection);
                             break;
                         }
                     }
-                    if(peerServerWaitVector.isEmpty()) {
+                    if(serverWait.isEmpty()) {
                         //no more peers to wait for
                         //terminate thread
-                        isRunning = false;
                         return;
                     }
-                    serverSocket.close();
+                    else {
+                        System.out.println("Waiting for " + serverWait.size() + " more peers");
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
