@@ -104,7 +104,7 @@ public class peerProcess {
                     System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                     Socket socket = serverSocket.accept();
                     System.out.println("Connected to " + socket.getRemoteSocketAddress());
-                    int peerId = peerHandshakeServerSocket(socket, this.hostProcess.selfPeerId);
+                    int peerId = PeerConnection.peerHandshakeServerSocket(socket, this.hostProcess.selfPeerId);
                     boolean found = false;
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
@@ -260,63 +260,6 @@ public class peerProcess {
         }
     }
 
-    //todo move sendMessage, receiveMessage, receiveMessageLength to SOMEWHERE ELSE
-    static void sendMessage(Socket socket, byte[] msg) {
-        try {
-            //stream write the message
-            OutputStream out = socket.getOutputStream();
-            out.write(msg);
-            out.flush();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
-    }
-
-    static byte[] receiveMessageLength(Socket socket) throws IOException {
-        // Each message (given from specifications) begins with a 4 byte length header
-        // This method reads the length header and returns the message
-        InputStream in = socket.getInputStream();
-        int expectedLength = in.read();  // Assumes a 4-byte length header
-        return receiveMessage(socket, expectedLength);
-    }
-
-    static byte[] receiveMessage(Socket socket, int expectedLength) throws IOException {
-        // Read message of length expectedLength bytes
-        byte[] message = new byte[expectedLength]; //add +1 later for message type?
-        int offset = 0;
-        InputStream in = socket.getInputStream();
-        while (offset < expectedLength) {
-            int bytesRead = in.read(message, offset, expectedLength - offset);
-            if (bytesRead == -1) {
-                throw new IOException("Connection was terminated before message was complete.");
-            }
-            offset += bytesRead;
-        }
-
-        return message;
-    }
-    static public int peerHandshakeServerSocket(Socket s,int peerId) throws IOException {
-        sendMessage(s,Message.createHandshakePayload(peerId));
-        byte[] handshakeMessage = receiveMessage(s,32);
-        //handshake is always 32 bytes
-
-        return Message.getIDFromHandshake(handshakeMessage);
-    }
-
-    static public boolean peerHandshake(Socket s,int selfPeerId, int expectedIdToReceive) throws IOException {
-        System.out.println("Waiting for handshake from peer " + expectedIdToReceive);
-        sendMessage(s,Message.createHandshakePayload(selfPeerId));
-        byte[] handshakeMessage = receiveMessage(s,32);
-        //handshake is always 32 bytes
-
-        if (!Message.checkHandshake(handshakeMessage, expectedIdToReceive)) {
-            System.err.println("Handshake failed");
-            return false;
-        }
-
-        System.err.println("Handshake successful");
-        return true;
-    }
     public static class CommonCfg {
         public int numberOfPreferredNeighbors;
         public int unchokingInterval;
