@@ -79,10 +79,15 @@ public class peerProcess {
     public static class ServerSocketThread extends Thread {
         private final int port;
         private final peerProcess hostProcess;
+        private volatile boolean isRunning = true; // Control flag for the loop
 
         public ServerSocketThread(int port, peerProcess hostProcess) {
             this.port = port;
             this.hostProcess = hostProcess;
+        }
+
+        public void stopThread() {
+            isRunning = false;
         }
 
         @Override
@@ -96,11 +101,10 @@ public class peerProcess {
             }
             if(serverWait.isEmpty()) {
                 System.out.println("No peers to wait for");
-                //terminate thread
                 return;
             }
             try (ServerSocket serverSocket = new ServerSocket(port)) {
-                while(true) {
+                while(isRunning) {
                     System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                     Socket socket = serverSocket.accept();
                     System.out.println("Connected to " + socket.getRemoteSocketAddress());
@@ -132,8 +136,10 @@ public class peerProcess {
                     if(peerServerWaitVector.isEmpty()) {
                         //no more peers to wait for
                         //terminate thread
+                        isRunning = false;
                         return;
                     }
+                    serverSocket.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
