@@ -259,6 +259,8 @@ public class peerProcess {
             System.out.println(ex.toString());
         }
     }
+
+    //todo move sendMessage, receiveMessage, receiveMessageLength to SOMEWHERE ELSE
     static void sendMessage(Socket socket, byte[] msg) {
         try {
             //stream write the message
@@ -293,7 +295,6 @@ public class peerProcess {
 
         return message;
     }
-
     static public int peerHandshakeServerSocket(Socket s,int peerId) throws IOException {
         sendMessage(s,Message.createHandshakePayload(peerId));
         byte[] handshakeMessage = receiveMessage(s,32);
