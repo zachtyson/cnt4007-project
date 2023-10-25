@@ -88,7 +88,7 @@ public class peerProcess {
         @Override
         public void run() {
             Vector<PeerConnection> peerServerWaitVector = this.hostProcess.peerConnectionVector;
-            Vector<PeerConnection> serverWait = new Vector<PeerConnection>();
+            Vector<PeerConnection> serverWait = new Vector<>();
             for(PeerConnection peerConnection : peerServerWaitVector) {
                 if(!peerConnection.client) {
                     serverWait.add(peerConnection);
@@ -115,8 +115,8 @@ public class peerProcess {
                     }
                     if(!found) {
                         System.err.println("Error: Peer ID " + peerId);
-                        for(int i = 0; i < serverWait.size(); i++) {
-                            System.err.println(serverWait.get(i).peerId);
+                        for (PeerConnection peerConnection : serverWait) {
+                            System.err.println(peerConnection.peerId);
                         }
                         System.exit(1);
                     }
@@ -128,6 +128,11 @@ public class peerProcess {
                             peerServerWaitVector.remove(peerConnection);
                             break;
                         }
+                    }
+                    if(peerServerWaitVector.isEmpty()) {
+                        //no more peers to wait for
+                        //terminate thread
+                        return;
                     }
                 }
             } catch (IOException e) {
