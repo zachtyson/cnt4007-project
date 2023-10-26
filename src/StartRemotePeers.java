@@ -7,6 +7,7 @@ import java.util.*;
 public class StartRemotePeers {
     public Vector<RemotePeerInfo> peerInfoVector;
     public void getConfiguration() {
+        // Reads the file PeerInfo.cfg and creates a vector of RemotePeerInfo objects
         String st;
         peerInfoVector = new Vector<RemotePeerInfo>();
         try {
@@ -60,12 +61,12 @@ public class StartRemotePeers {
                     file.delete();
                 }
             }
-            copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg", peerInfo);
-            copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg", peerInfo);
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "peerProcess.java", peerInfo);
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "Message.java", peerInfo);
+            copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg");
+            copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg");
+            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "peerProcess.java");
+            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "Message.java");
             if(peerInfo.hasFileOnStart) {
-                copyFile(path, peerFolderFile.getAbsolutePath(), "thefile", peerInfo);
+                copyFile(path, peerFolderFile.getAbsolutePath(), "thefile");
             }
             try {
                 ProcessBuilder compilePeerProcess = new ProcessBuilder("javac","peerProcess.java");
@@ -85,7 +86,8 @@ public class StartRemotePeers {
     }
 
     public static void copyFile(String sourcePath, String destinationPath,
-                                String fileName, RemotePeerInfo peerInfo) {
+                                String fileName) {
+        // Copies a file from sourcePath to destinationPath
         File sourceFile = new File(sourcePath, fileName);
         File destinationFile = new File(destinationPath, fileName);
         try {
@@ -127,10 +129,13 @@ public class StartRemotePeers {
         ProcessBuilder processBuilder = new ProcessBuilder("java", "peerProcess", pInfo.peerId);
         processBuilder.directory(dir);
         Process process = processBuilder.start();
+        //Starts a thread for each peerProcess
         return process;
     }
 
     private static void getProcessOutput(Process process, StartRemotePeers myStart) {
+        //Captures the output of each peerProcess and prints it to the console
+        //Occasional weird synchronization issues, but it works for the most part
         Thread outputThread = new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(
                     new InputStreamReader(process.getInputStream()))) {
