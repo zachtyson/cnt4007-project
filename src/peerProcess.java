@@ -53,22 +53,29 @@ public class peerProcess {
     }
 
     public peerProcess(int currentPeerID) {
+        // Reads Common.cfg and PeerInfo.cfg
         try {
             getCommon();
             this.peerConnectionVector = getPeers(currentPeerID);
         } catch (IOException e) {
             System.out.println("Error: PeerInfo.cfg not found");
         }
+        // Start listening for connections to ServerSocket
         startListening();
+        // Start connecting to peers before it
         startConnection();
     }
 
     public void startListening() {
+        // Listens for connections to ServerSocket
+        // Then after a handshake the new socket is redirected to the appropriate PeerConnection
         ServerSocketThread serverSocketThread = new ServerSocketThread(this.selfPeerPort, this);
         serverSocketThread.start();
     }
 
     public void startConnection() {
+        // Each peer tries to connect to all peers before it
+        // to each peer's ServerSocket
         for(PeerConnection peerConnection : this.peerConnectionVector) {
             if(peerConnection.client) {
                 peerConnection.start();
@@ -77,6 +84,9 @@ public class peerProcess {
     }
 
     public static class ServerSocketThread extends Thread {
+        //Temporary class to listen for connections to the current peer's ServerSocket
+        //Then after a handshake the new socket is redirected to the appropriate PeerConnection
+        //Each socket connection to ServerSocket then is passed to PeerConnection (provided the handshake is successful and the PeerConnection.client is false)
         private final int port;
         private final peerProcess hostProcess;
 
@@ -103,8 +113,11 @@ public class peerProcess {
             }
             try (ServerSocket serverSocket = new ServerSocket(port)) {
                 while(true) {
+                    //Waits for a connection to the ServerSocket
+                    //Currently this waits forever but I'm thinking adding a timeout clause might be a good idea
                     System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                     Socket socket = serverSocket.accept();
+                    //After a connection is made, a handshake is performed
                     System.out.println("Connected to " + socket.getRemoteSocketAddress());
                     int peerId = PeerConnection.peerHandshakeServerSocket(socket, this.hostProcess.selfPeerId);
                     boolean found = false;
@@ -114,6 +127,7 @@ public class peerProcess {
                             found = true;
                             break;
                         }
+                        //The handshake includes the peer's id, which is then checked amongst the list of peers in serverWait
                     }
                     if(!found) {
                         System.err.println("Error: Peer ID " + peerId);
