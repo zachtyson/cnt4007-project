@@ -2,6 +2,8 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
+import java.util.ArrayList;
 
 enum MsgType {
     handshake,
@@ -303,6 +305,21 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         public String messagePayload;
         public int payloadLength;
     }
+
+    public static List<String> splitMessage(String message, int chunkSize) {
+        //splits the string message payload into smaller chunks list
+        List<String> messageChunks = new ArrayList<>();
+        int messageLength = message.length();
+
+        for (int i = 0; i < messageLength; i += chunkSize) {
+            int end = Math.min(messageLength, i + chunkSize);
+            String chunk = message.substring(i, end);
+            messageChunks.add(chunk);
+        }
+
+        return messageChunks;
+    }
+
 }
 /*
 After handshaking, each peer can send a stream of actual messages. An actual message
