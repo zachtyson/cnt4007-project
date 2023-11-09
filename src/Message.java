@@ -1,5 +1,11 @@
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
@@ -306,18 +312,29 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         public int payloadLength;
     }
 
-    public static List<String> splitMessage(String message, int chunkSize) {
-        //splits the string message payload into smaller chunks list
-        List<String> messageChunks = new ArrayList<>();
-        int messageLength = message.length();
+    private static List<byte[]> splitFileIntoMemory(String sourceFile, int pieceSize) {
+        // Split file into pieces of size pieceSize
+        // This should really only be used for peers that start with the file
+        // Other peers should receive pieces from other peers
+        // pieceSize is in bytes
+        Path sourcePath = Paths.get(sourceFile);
+        List<byte[]> filePieces = new ArrayList<>();
 
-        for (int i = 0; i < messageLength; i += chunkSize) {
-            int end = Math.min(messageLength, i + chunkSize);
-            String chunk = message.substring(i, end);
-            messageChunks.add(chunk);
+        try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(sourcePath))) {
+            byte[] buffer;
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer = new byte[pieceSize])) > 0) {
+                if (bytesRead < pieceSize) {
+                    // Trim buffer if not full
+                    buffer = Arrays.copyOf(buffer, bytesRead);
+                }
+                filePieces.add(buffer);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        return messageChunks;
+        return filePieces;
     }
 
 }
