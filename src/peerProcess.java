@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Arrays;
 import java.util.Vector;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class peerProcess {
@@ -164,7 +165,13 @@ public class peerProcess {
     public int selfPeerId;
     public String selfPeerAddress;
     public int selfPeerPort;
-    boolean[] selfBitfield;
+
+    public enum pieceStatus {
+        EMPTY,
+        REQUESTING,
+        DOWNLOADED
+    }
+    ConcurrentHashMap<Integer, pieceStatus> pieceMap;
     public void close() {
         // Close all connections
         for(PeerConnection peerConnection : peerConnectionVector) {
@@ -205,9 +212,9 @@ public class peerProcess {
                         selfPeerPort = peerPort;
                         selfPeerAddress = tokens[1];
                         selfPeerId = tempPeerID;
-                        selfBitfield = new boolean[commonCfg.numPieces];
-                        if(hasFileOnStart) {
-                            Arrays.fill(selfBitfield, true);
+                        pieceMap = new ConcurrentHashMap<>();
+                        for(int i = 0; i < commonCfg.numPieces; i++) {
+                            pieceMap.put(i, pieceStatus.EMPTY);
                         }
                     }
                     //Code above tries to connect to any peers before it, and any peers after it will connect to it
