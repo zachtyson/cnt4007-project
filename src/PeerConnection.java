@@ -53,7 +53,24 @@ public class PeerConnection extends Thread{
 //            System.out.println(); // New line after printing all bytes
         //if it does, send a bitfield message with all 1s
         //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
+        startHandlers(); //Starts the send and receive handlers
         close();
+    }
+
+    public void startHandlers() {
+        sendHandler = new SendHandler(this);
+        receiveHandler = new ReceiveHandler(this);
+
+        sendHandler.start();
+        receiveHandler.start();
+        //Starts both the send and receive handler threads
+        try {
+            sendHandler.join();
+            receiveHandler.join();
+        } catch (InterruptedException e) {
+
+        }
+        //Joining the threads will cause the program to wait until both threads are finished
     }
 
 //        public void server() {
