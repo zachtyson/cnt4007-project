@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 enum MsgType {
     handshake,
@@ -111,19 +112,19 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return headerAndMessageType;
     }
 
-    public static byte[] generateBitmapMessage(boolean[] bitmap) {
+    public static byte[] generateBitmapMessage(ConcurrentHashMap<Integer, peerProcess.pieceStatus> bitmap, int numPieces) {
         // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
         // 4-byte message length field
         // Each value in the bitfield is represented as a single bit in the bitfield payload.
-        int messageLength = (int) Math.ceil(bitmap.length / 8.0);
+        int messageLength = (int) Math.ceil(numPieces / 8.0);
         //message type is 5 aka 00000101
         byte[] bitmapMessage = new byte[messageLength + 5];
         byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.bitfield);
         System.arraycopy(headerAndMessageType, 0, bitmapMessage, 0, 5);
 
         // message payload
-        for (int i = 0; i < bitmap.length; i++) {
-            if (bitmap[i]) {
+        for (int i = 0; i < numPieces; i++) {
+            if (bitmap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
                 bitmapMessage[5+(i / 8)] |= (1 << (7 - (i % 8)));
                 // I hate that I can't read this and I wrote it - Zach
                 // this should convert a bitmap into something like 11111000 (for a full bitmap, note the trailing zeroes to make a byte)
