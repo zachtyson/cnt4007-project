@@ -172,6 +172,7 @@ public class peerProcess {
         DOWNLOADED
     }
     ConcurrentHashMap<Integer, pieceStatus> pieceMap;
+    ConcurrentHashMap<Integer, Byte[]> pieceData;
     public void close() {
         // Close all connections
         for(PeerConnection peerConnection : peerConnectionVector) {
@@ -216,6 +217,7 @@ public class peerProcess {
                         for(int i = 0; i < commonCfg.numPieces; i++) {
                             pieceMap.put(i, pieceStatus.EMPTY);
                         }
+                        pieceData = new ConcurrentHashMap<>();
                     }
                     //Code above tries to connect to any peers before it, and any peers after it will connect to it
                 } catch (NumberFormatException e) {
