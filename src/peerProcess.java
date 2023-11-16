@@ -173,7 +173,8 @@ public class peerProcess {
     public enum pieceStatus {
         EMPTY,
         REQUESTING,
-        DOWNLOADED
+        DOWNLOADED,
+        INTERESTED,
     }
     ConcurrentHashMap<Integer, pieceStatus> pieceMap;
     ConcurrentHashMap<Integer, byte[]> pieceData = new ConcurrentHashMap<>();

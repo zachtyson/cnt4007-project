@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PeerConnection extends Thread{
     public int peerId;
@@ -11,7 +12,7 @@ public class PeerConnection extends Thread{
     OutputStream out;
     InputStream in;
     Boolean client;
-    boolean[] bitfield;
+    ConcurrentHashMap<Integer, peerProcess.pieceStatus> pieceMap;
     peerProcess.CommonCfg commonCfg;
     SendHandler sendHandler;
     ReceiveHandler receiveHandler;
@@ -27,7 +28,10 @@ public class PeerConnection extends Thread{
         this.commonCfg = commonCfg;
         //Set bitfield to all 0s
         //all elements are false by default
-        bitfield = new boolean[commonCfg.numPieces];
+        pieceMap = new ConcurrentHashMap<>();
+        for(int i = 0; i < commonCfg.numPieces; i++) {
+            pieceMap.put(i, peerProcess.pieceStatus.EMPTY);
+        }
     }
 
     public void setSocket(Socket socket) {
