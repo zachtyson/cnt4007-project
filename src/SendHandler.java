@@ -5,7 +5,10 @@ public class SendHandler extends Thread {
     SendHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
     }
+    @Override
     public void run() {
+        System.out.println("Starting send handler for peer " + peerConnection.peerId);
+
     }
     void sendMessage(byte[] msg) {
         try {

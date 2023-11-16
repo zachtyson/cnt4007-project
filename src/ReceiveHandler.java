@@ -1,11 +1,15 @@
 import java.io.IOException;
 
+//ReceiveHandler is in charge of receiving messages from the peer, and passing them to the host process
+//and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
 public class ReceiveHandler extends Thread{
     PeerConnection peerConnection;
     ReceiveHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
     }
+    @Override
     public void run() {
+        System.out.println("Starting receive handler for peer " + peerConnection.peerId);
     }
     byte[] receiveMessageLength() throws IOException {
         // Each message (given from specifications) begins with a 4 byte length header
