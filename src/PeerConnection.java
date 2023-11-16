@@ -7,7 +7,7 @@ public class PeerConnection extends Thread{
     public int peerId;
     public String peerAddress;
     public int peerPort;
-    private Socket socket;
+    Socket socket;
     OutputStream out;
     InputStream in;
     Boolean client;
@@ -58,6 +58,15 @@ public class PeerConnection extends Thread{
     }
 
     public void startHandlers() {
+        if(socket == null) {
+            System.out.println("Error: socket is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+        }
+        if(in == null) {
+            System.out.println("Error: in is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+        }
+        if(out == null) {
+            System.out.println("Error: out is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+        }
         sendHandler = new SendHandler(this);
         receiveHandler = new ReceiveHandler(this);
 

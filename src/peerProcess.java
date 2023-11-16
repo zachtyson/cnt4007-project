@@ -144,6 +144,8 @@ public class peerProcess {
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
+                            peerConnection.in = new DataInputStream(socket.getInputStream());
+                            peerConnection.out = new DataOutputStream(socket.getOutputStream());
                             serverWait.remove(peerConnection);
                             break;
                         }
