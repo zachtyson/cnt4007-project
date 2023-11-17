@@ -277,6 +277,20 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return interpretation;
     }
 
+    public static byte[] generateHaveMessage(int index) {
+        // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
+        // 4-byte message length field
+        int messageLength = 4;
+        byte[] haveMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.have);
+        System.arraycopy(headerAndMessageType, 0, haveMessage, 0, 5);
+
+        // message payload
+        byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
+        System.arraycopy(pieceIndex, 0, haveMessage, 5, 4);
+        return haveMessage;
+    }
+
     private static void msgMisinterpreter(byte[] payload){
         System.out.println("Bad Message");
         //Print each byte
