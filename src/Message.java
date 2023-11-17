@@ -188,10 +188,11 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 //        msgInterpret();
 //    }
     //checks that the msg is valid and has the correct payload for the msg type
-    private Interpretation msgInterpret(byte[] payload){
+    public static Interpretation msgInterpret(byte[] payload){
         //4-byte message length field, 1-byte message type field, and a message payload with variable size.
         byte[] temp = new byte[4];
         System.arraycopy(payload, 0, temp, 0, 4);
+        Interpretation interpretation = new Interpretation();
 
         int payloadLength = ByteBuffer.wrap(temp).getInt();
         if(payload.length < 5){
@@ -205,7 +206,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.choke;
+                    interpretation.Msg = MsgType.choke;
                 }
                 break;
             case 1 : //unchoke
@@ -213,7 +214,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.unchoke;
+                    interpretation.Msg = MsgType.unchoke;
                 }
                 break;
             case 2 : //interested
@@ -221,7 +222,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.interested;
+                    interpretation.Msg = MsgType.interested;
                 }
                 break;
             case 3 : //notInterested
@@ -229,7 +230,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.notInterested;
+                    interpretation.Msg = MsgType.notInterested;
                 }
                 break;
             case 4 : //have
@@ -237,7 +238,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.have;
+                    interpretation.Msg = MsgType.have;
                 }
                 break;
             case 5 : //bitfield
@@ -245,7 +246,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.bitfield;
+                    interpretation.Msg = MsgType.bitfield;
                 }
                 break;
             case 6 : //request
@@ -253,7 +254,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.request;
+                    interpretation.Msg = MsgType.request;
                 }
                 break;
             case 7 : //piece
@@ -261,7 +262,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.piece;
+                    interpretation.Msg = MsgType.piece;
                 }
                 break;
             default:
@@ -280,14 +281,12 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         else{
             messagePayload = null;
         }
-        Interpretation interpretation = new Interpretation();
-        interpretation.Msg = Msg;
         interpretation.messagePayload = messagePayload;
         interpretation.payloadLength = payloadLength;
         return interpretation;
     }
 
-    private void msgMisinterpreter(byte[] payload){
+    private static void msgMisinterpreter(byte[] payload){
         System.out.println("Bad Message");
         //Print each byte
         for(byte b : payload){
