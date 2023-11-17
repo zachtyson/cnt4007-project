@@ -2,7 +2,9 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PeerConnection extends Thread{
     public int peerId;
@@ -17,6 +19,8 @@ public class PeerConnection extends Thread{
     SendHandler sendHandler;
     ReceiveHandler receiveHandler;
     peerProcess hostProcess;
+    Queue<Integer> requestedPieces = new ConcurrentLinkedQueue<>();
+    Queue<Integer> sendResponses = new ConcurrentLinkedQueue<>();
 
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
         super();
