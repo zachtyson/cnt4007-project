@@ -200,7 +200,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             msgMisinterpreter(payload);
         }
 
-        switch (payload[4]){
+        byte messageType = payload[4];
+        System.out.println("Message Type: " + messageType);
+        switch (messageType){
             case 0 : //choke
                 if(payloadLength != 1){
                     msgMisinterpreter(payload);
@@ -258,29 +260,18 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 7 : //piece
-                if(payloadLength != 5){
-                    msgMisinterpreter(payload);
-                }
-                else{
                     interpretation.Msg = MsgType.piece;
-                }
+                    interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
                 break;
             default:
+                System.out.println("Invalid message type");
                 msgMisinterpreter(payload);
                 break;
         }
         //First 5 bytes are the length (4) and the type (1) so the payload is the rest
-        String messagePayload;
-        if(payloadLength > 5){
-            temp = new byte[payloadLength - 5];
-            for(int i = 5,x= 0; i < payloadLength; i++,x++){
-                temp[x] = payload[i];
-            }
-            messagePayload = ByteBuffer.wrap(temp).toString();
-        }
-        else{
-            messagePayload = null;
-        }
+        System.out.println("Payload Length: " + payloadLength);
+        byte[] messagePayload = new byte[payloadLength];
+        System.arraycopy(payload, 5, messagePayload, 0, payloadLength);
         interpretation.messagePayload = messagePayload;
         interpretation.payloadLength = payloadLength;
         return interpretation;
@@ -289,10 +280,24 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     private static void msgMisinterpreter(byte[] payload){
         System.out.println("Bad Message");
         //Print each byte
-        for(byte b : payload){
-            System.out.println(b);
-        }
+//        for(byte b : payload){
+//            System.out.println(b);
+//        }
         System.exit(0);
+    }
+
+    public static byte[] generatePieceMessage(byte[] payload) {
+        // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
+        // 4-byte message length field
+        int messageLength = payload.length;
+        byte[] pieceMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.piece);
+        System.arraycopy(headerAndMessageType, 0, pieceMessage, 0, 5);
+
+        // message payload
+        System.arraycopy(payload, 0, pieceMessage, 5, messageLength);
+        System.out.println("Piece message length: " + pieceMessage.length);
+        return pieceMessage;
     }
 
     public String ToString(byte[] payload){
@@ -308,8 +313,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 
     public static class Interpretation {
         public MsgType Msg;
-        public String messagePayload;
+        public byte[] messagePayload;
         public int payloadLength;
+        Integer pieceIndex = null;
     }
 
     private static List<byte[]> splitFileIntoMemory(String sourceFile, int pieceSize) {
