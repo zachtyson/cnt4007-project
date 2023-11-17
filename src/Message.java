@@ -201,7 +201,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         }
 
         byte messageType = payload[4];
-        System.out.println("Message Type: " + messageType);
+        //System.out.println("Message Type: " + messageType);
         switch (messageType){
             case 0 : //choke
                 if(payloadLength != 1){
@@ -236,7 +236,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 4 : //have
-                if(payloadLength != 5){
+                if(payloadLength != 9){
                     msgMisinterpreter(payload);
                 }
                 else{
@@ -269,7 +269,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
         }
         //First 5 bytes are the length (4) and the type (1) so the payload is the rest
-        System.out.println("Payload Length: " + payloadLength);
+        //System.out.println("Payload Length: " + payloadLength);
         byte[] messagePayload = new byte[payloadLength];
         System.arraycopy(payload, 5, messagePayload, 0, payloadLength);
         interpretation.messagePayload = messagePayload;
@@ -310,7 +310,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 
         // message payload
         System.arraycopy(payload, 0, pieceMessage, 5, messageLength);
-        System.out.println("Piece message length: " + pieceMessage.length);
+        //System.out.println("Piece message length: " + pieceMessage.length);
         return pieceMessage;
     }
 
