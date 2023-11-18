@@ -88,46 +88,63 @@ public class ReceiveHandler extends Thread{
         }
     }
     byte[] receiveMessageLength() throws IOException {
-        // Each message (given from specifications) begins with a 4 byte length header
-        // This method reads the length header and returns the message
-        System.out.println("Received message from peerS " + peerConnection.peerId);
         byte[] expectedLength = peerConnection.in.readNBytes(4);
-        ByteBuffer wrapped = ByteBuffer.wrap(expectedLength);
-        int expectedLengthInt = -1;
-        try {
-            expectedLengthInt = wrapped.getInt();
 
-        } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
-            System.out.println("Error: " + e.getStackTrace());
-            System.out.println("Error: " + e.getCause());
-            System.out.println("Error: " + e.getLocalizedMessage());
-            System.out.println("Error: " + e.getSuppressed());
+        ByteBuffer wrapped = ByteBuffer.wrap(expectedLength);
+        int expectedLengthInt = wrapped.getInt();
+        //Type = 5th byte
+        byte[] type = peerConnection.in.readNBytes(1);
+
+
+        if (expectedLengthInt <= 0) {
+            throw new IOException("Invalid message length: " + expectedLengthInt);
         }
-                // Assumes a 4-byte length header
-        if(expectedLengthInt == -1) {
-            throw new IOException("Connection was terminated before message was complete.");
-        }
-        if(expectedLengthInt == 0) {
-            return new byte[0];
-        }
-        System.out.println("Message length: " + expectedLengthInt);
-        return receiveMessage(expectedLengthInt);
+
+        byte[] overallMessage = new byte[expectedLengthInt + expectedLength.length + 1];
+        System.arraycopy(expectedLength, 0, overallMessage, 0, expectedLength.length);
+        System.arraycopy(type, 0, overallMessage, 4, 1);
+        byte[] message = receiveMessage(expectedLengthInt);
+        System.arraycopy(message, 0, overallMessage, 5, message.length);
+        //parseBitmapMessage(overallMessage);
+        return overallMessage;
     }
 
+    public static void parseBitmapMessage(byte[] bitmapMessage) {
+        // Extracting the message length
+        int messageLength = 0;
+        for (int i = 0; i < 4; i++) {
+            messageLength |= (bitmapMessage[i] & 0xFF) << (24 - 8 * i);
+        }
+
+        // Extracting the message type
+        int messageType = bitmapMessage[4] & 0xFF;
+
+        // Outputting the extracted information
+        System.out.println("Message Length: " + messageLength);
+        System.out.println("Message Type: " + messageType);
+
+        // Extracting and interpreting the payload
+        System.out.println("Payload:");
+        for (int i = 0; i < bitmapMessage.length; i++) {
+            for (int j = 7; j >= 0; j--) {
+                boolean isDownloaded = (bitmapMessage[i] & (1 << j)) != 0;
+                System.out.print(isDownloaded ? "1" : "0");
+            }
+            System.out.println(); // New line for each byte
+        }
+    }
+
+
     byte[] receiveMessage(int expectedLength) throws IOException {
-        // Read message of length expectedLength bytes
-        byte[] message = new byte[expectedLength+1]; //add +1 later for message type?
+        byte[] message = new byte[expectedLength];
         int offset = 0;
-        byte messageType = (byte) peerConnection.in.read();
         while (offset < expectedLength) {
             int bytesRead = peerConnection.in.read(message, offset, expectedLength - offset);
             if (bytesRead == -1) {
-                throw new IOException("Connection was terminated before message was complete.");
+                throw new IOException("Connection terminated before message completion.");
             }
             offset += bytesRead;
         }
-
         return message;
     }
 
