@@ -47,10 +47,25 @@ public class ReceiveHandler extends Thread{
                     case request:
                         System.out.println("Received request message from peer");
                         System.out.println("Piece index: " + interpretation.pieceIndex);
-
+                        peerConnection.sendResponses.add(interpretation.pieceIndex);
                         break;
                     case piece:
                         System.out.println("Received piece message from peer");
+                        int pieceIndex = interpretation.pieceIndex;
+                        byte[] piece = interpretation.messagePayload;
+                        peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
+                        peerConnection.hostProcess.pieceData.put(pieceIndex, piece);
+                        boolean hasAllPiecesAfterReceieve = true;
+                        for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                            if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                                hasAllPiecesAfterReceieve = false;
+                                break;
+                            }
+                        }
+                        peerConnection.hostProcess.hasAllPieces.set(hasAllPiecesAfterReceieve);
+                        if(hasAllPiecesAfterReceieve) {
+                            System.out.println("Host has all pieces");
+                        }
                         break;
                     case bitfield:
                         System.out.println("Received bitfield message from peer");
