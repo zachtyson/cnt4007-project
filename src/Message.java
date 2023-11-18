@@ -257,6 +257,8 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             case 7 : //piece
                 interpretation.Msg = MsgType.piece;
                 interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
+                interpretation.messagePayload = new byte[payloadLength - 4];
+                System.arraycopy(payload, 9, interpretation.messagePayload, 0, payloadLength - 4);
                 break;
             default:
                 System.out.println("Invalid message type");
@@ -295,16 +297,21 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         System.exit(0);
     }
 
-    public static byte[] generatePieceMessage(byte[] payload) {
-        // 4-byte message length field, 1 byte message type field, and a message payload with variable size.
-        // 4-byte message length field
-        int messageLength = payload.length;
+    public static byte[] generatePieceMessage(byte[] payload,int index) {
+        if(payload == null){
+            System.out.println("Payload is null at index " + index);
+            System.exit(0);
+        }
+        // 4-byte message length field, 1 byte message type field, 4 bytes for piece index, and a message payload with variable size.
+        int messageLength = payload.length + 4;
         byte[] pieceMessage = new byte[messageLength + 5];
         byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.piece);
         System.arraycopy(headerAndMessageType, 0, pieceMessage, 0, 5);
 
         // message payload
-        System.arraycopy(payload, 0, pieceMessage, 5, messageLength);
+        byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
+        System.arraycopy(pieceIndex, 0, pieceMessage, 5, 4);
+        System.arraycopy(payload, 0, pieceMessage, 9, payload.length);
         //System.out.println("Piece message length: " + pieceMessage.length);
         return pieceMessage;
     }
