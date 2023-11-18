@@ -2,14 +2,12 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 enum MsgType {
@@ -193,6 +191,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         byte[] temp = new byte[4];
         System.arraycopy(payload, 0, temp, 0, 4);
         Interpretation interpretation = new Interpretation();
+        //System.out.println("Payload: " + Arrays.toString(payload));
 
         int payloadLength = ByteBuffer.wrap(temp).getInt();
         if(payload.length < 5){
@@ -244,24 +243,20 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 5 : //bitfield
-                if(payloadLength != 5){
-                    msgMisinterpreter(payload);
-                }
-                else{
-                    interpretation.Msg = MsgType.bitfield;
-                }
+                interpretation.Msg = MsgType.bitfield;
                 break;
             case 6 : //request
-                if(payloadLength != 5){
+                if(payloadLength != 4){
                     msgMisinterpreter(payload);
                 }
                 else{
                     interpretation.Msg = MsgType.request;
+                    interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
                 }
                 break;
             case 7 : //piece
-                    interpretation.Msg = MsgType.piece;
-                    interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
+                interpretation.Msg = MsgType.piece;
+                interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
                 break;
             default:
                 System.out.println("Invalid message type");
@@ -294,14 +289,14 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     private static void msgMisinterpreter(byte[] payload){
         System.out.println("Bad Message");
         //Print each byte
-//        for(byte b : payload){
-//            System.out.println(b);
-//        }
+        for(byte b : payload){
+            System.out.println(b);
+        }
         System.exit(0);
     }
 
     public static byte[] generatePieceMessage(byte[] payload) {
-        // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
+        // 4-byte message length field, 1 byte message type field, and a message payload with variable size.
         // 4-byte message length field
         int messageLength = payload.length;
         byte[] pieceMessage = new byte[messageLength + 5];
@@ -312,6 +307,20 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         System.arraycopy(payload, 0, pieceMessage, 5, messageLength);
         //System.out.println("Piece message length: " + pieceMessage.length);
         return pieceMessage;
+    }
+
+    public static byte[] generateRequestMessage(int index) {
+        // 4-byte message length field, file.txt-byte message type field, and a 4 byte message payload
+        // 4-byte message length field
+        int messageLength = 4;
+        byte[] requestMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.request);
+        System.arraycopy(headerAndMessageType, 0, requestMessage, 0, 5);
+
+        // message payload
+        byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
+        System.arraycopy(pieceIndex, 0, requestMessage, 5, 4);
+        return requestMessage;
     }
 
     public String ToString(byte[] payload){
@@ -357,10 +366,22 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return filePieces;
     }
 
+    public static int getNthBit(byte[] byteArray, int n) {
+        if (byteArray == null || byteArray.length * 8 <= n) {
+            throw new IllegalArgumentException("Bit position out of range");
+        }
+
+        int byteIndex = n / 8; // Find the index of the byte containing the nth bit
+        int bitPosition = n % 8; // Find the position of the bit in that byte
+
+        // Extract the bit using a bitwise AND operation, then shift right
+        return (byteArray[byteIndex] >> (7 - bitPosition)) & 1;
+    }
+
 }
 /*
 After handshaking, each peer can send a stream of actual messages. An actual message
-consists of 4-byte message length field, 1-byte message type field, and a message
+consists of 4-byte message length field, file.txt-byte message type field, and a message
 payload with variable size.
  */
 
