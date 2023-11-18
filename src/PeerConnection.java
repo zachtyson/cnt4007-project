@@ -5,6 +5,7 @@ import java.net.UnknownHostException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PeerConnection extends Thread{
     public int peerId;
@@ -14,13 +15,14 @@ public class PeerConnection extends Thread{
     OutputStream out;
     InputStream in;
     Boolean client;
-    ConcurrentHashMap<Integer, peerProcess.pieceStatus> pieceMap;
+    ConcurrentHashMap<Integer, peerProcess.pieceStatus> peerPieceMap; //pieceMap of the PEER not the host
     peerProcess.CommonCfg commonCfg;
     SendHandler sendHandler;
     ReceiveHandler receiveHandler;
     peerProcess hostProcess;
     Queue<Integer> requestedPieces = new ConcurrentLinkedQueue<>();
     Queue<Integer> sendResponses = new ConcurrentLinkedQueue<>();
+    AtomicBoolean peerHasAllPieces = new AtomicBoolean(false);
 
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
         super();
@@ -32,9 +34,9 @@ public class PeerConnection extends Thread{
         this.commonCfg = commonCfg;
         //Set bitfield to all 0s
         //all elements are false by default
-        pieceMap = new ConcurrentHashMap<>();
+        peerPieceMap = new ConcurrentHashMap<>();
         for(int i = 0; i < commonCfg.numPieces; i++) {
-            pieceMap.put(i, peerProcess.pieceStatus.EMPTY);
+            peerPieceMap.put(i, peerProcess.pieceStatus.EMPTY);
         }
     }
 
