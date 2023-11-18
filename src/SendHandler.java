@@ -29,7 +29,7 @@ public class SendHandler extends Thread {
         }
         while (true) {
             try {
-                Thread.sleep(500);
+                Thread.sleep(50);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -45,10 +45,20 @@ public class SendHandler extends Thread {
                 //If no requests, I guess just busy wait?
                 //Queue requests to send
                 for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                    if(peerConnection.peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED && (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED || peerConnection.hostProcess.pieceMap.get(i) == null)) {
-                        peerConnection.requestedPieces.add(i);
-                        System.out.println("Added piece " + i + " to requested pieces");
+                    if (peerConnection.peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
+                        // Check if the piece is neither downloaded nor currently being requested by this peer,
+                        // and also not already in the requested pieces set. Includes a null check.
+                        if ((peerConnection.hostProcess.pieceMap.get(i) == null ||
+                                (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED &&
+                                        peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.REQUESTING))
+                                && !peerConnection.requestedPieces.contains(i)) {
+
+                            peerConnection.requestedPieces.add(i);
+                            peerConnection.hostProcess.pieceMap.put(i, peerProcess.pieceStatus.REQUESTING);
+                            System.out.println("Added piece " + i + " to requested pieces");
+                        }
                     }
+
                     else {
                         System.out.println("Did not add piece " + i + " to requested pieces");
                     }
