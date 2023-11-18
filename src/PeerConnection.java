@@ -55,7 +55,7 @@ public class PeerConnection extends Thread{
         }
         //at this point the connection is established and handshake is done, and we can start sending/receiving messages
         //check if current peer has the file DONE AT STARTUP
-        byte[] bitfieldMessage = Message.generateBitmapMessage(this.hostProcess.pieceMap, this.commonCfg.numPieces);
+//        byte[] bitfieldMessage = Message.generateBitmapMessage(this.hostProcess.pieceMap, this.commonCfg.numPieces);
 //            for (byte b : bitfieldMessage) {
 //                String bits = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
 //                System.out.print(bits + " ");
