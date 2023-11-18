@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class peerProcess {
@@ -178,6 +179,7 @@ public class peerProcess {
     }
     ConcurrentHashMap<Integer, pieceStatus> pieceMap;
     ConcurrentHashMap<Integer, byte[]> pieceData = new ConcurrentHashMap<>();
+    AtomicBoolean hasAllPieces = new AtomicBoolean(false); //Atomic boolean added for more efficiency so that we don't have to check the entire map every time
     public void close() {
         // Close all connections
         for(PeerConnection peerConnection : peerConnectionVector) {
@@ -251,6 +253,7 @@ public class peerProcess {
                                 }
                                 for(int i = 0; i < commonCfg.numPieces; i++) {
                                     pieceMap.put(i, pieceStatus.DOWNLOADED);
+                                    hasAllPieces.set(true);
                                 }
                                 for(int i = 0; i < commonCfg.numPieces; i++) {
                                     if(pieceData.get(i) == null) {
