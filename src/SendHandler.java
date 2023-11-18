@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 public class SendHandler extends Thread {
     PeerConnection peerConnection;
@@ -8,102 +9,82 @@ public class SendHandler extends Thread {
     }
     @Override
     public void run() {
-        System.out.println("Starting send handler for peer " + peerConnection.peerId);
-        int numMessages = 0;
+        System.out.println("Starting send handler for peer");
+        boolean hasAnyPieces = checkForPieces();
+        if (hasAnyPieces) {
+            // If it has any pieces, send bitfield message
+            int numBytes = (int) Math.ceil(peerConnection.commonCfg.numPieces / 8.0);
+            System.out.println("Num bytes: " + numBytes);
+            //byte[] headerAndType = Message.generateHeaderAndMessageType(numBytes,MsgType.bitfield);
+            byte[] bitfieldMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+
+            try {
+                //Print full message
+                System.out.println("Message: " + Arrays.toString(bitfieldMessage));
+                sendMessage(bitfieldMessage);
+                System.out.println("Sent bitfield to peer");
+            } catch (IOException e) {
+                //e.printStackTrace();
+            }
+        }
         while (true) {
-            if(!peerConnection.sendResponses.isEmpty()) {
-                //Send have message
-                int pieceIndex = peerConnection.sendResponses.remove();
-                byte[] message = Message.generateHaveMessage(pieceIndex);
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            boolean noRequestedPieces = peerConnection.requestedPieces.isEmpty();
+            boolean hasAllPieces = peerConnection.hostProcess.hasAllPieces.get();
+            boolean peerHasAllPieces = peerConnection.peerHasAllPieces.get();
+//            System.out.println("No requested pieces: " + noRequestedPieces);
+//            System.out.println("Has all pieces: " + hasAllPieces);
+//            System.out.println("Peer has all pieces: " + peerHasAllPieces);
+            if(noRequestedPieces && !hasAllPieces && peerHasAllPieces) {
+                System.out.println("Peer has all pieces, requesting pieces");
+                //If all pieces have been downloaded, respond to queue of requests
+                //If no requests, I guess just busy wait?
+                //Queue requests to send
+                for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                    if(peerConnection.peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED && (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED || peerConnection.hostProcess.pieceMap.get(i) == null)) {
+                        peerConnection.requestedPieces.add(i);
+                        System.out.println("Added piece " + i + " to requested pieces");
+                    }
+                    else {
+                        System.out.println("Did not add piece " + i + " to requested pieces");
+                    }
+                }
+            } else {
+                //System.out.println("Uh oh");
+            }
+
+            if (!peerConnection.requestedPieces.isEmpty()) {
+                //Send piece message
+                int pieceIndex = peerConnection.requestedPieces.remove();
+                byte[] message = Message.generateRequestMessage(pieceIndex);
                 try {
                     sendMessage(message);
-                    System.out.println("Sent message to peer " + peerConnection.peerId);
-                    numMessages++;
-                    System.out.println("Number of messages sent to peer " + peerConnection.peerId + ": " + numMessages);
+                    System.out.println("Sent message to peer");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }
-            boolean pieceWeHaveButTheyDont = false;
-            for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                boolean hasPiece = false;
-                if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.EMPTY) {
-                    hasPiece = true;
-                }
-                if(hasPiece) {
-                    //Check to see if other peer has piece
-                    if (peerConnection.pieceMap.get(i) == peerProcess.pieceStatus.EMPTY) {
-                        pieceWeHaveButTheyDont = true;
-                        //Send interested message
-//                    byte[] message = Message.generateInterestedMessage();
-//                    sendMessage(message);
-//                    System.out.println("Sent message to peer " + peerConnection.peerId);
-//                    numMessages++;
-//                    System.out.println("Number of messages sent to peer " + peerConnection.peerId + ": " + numMessages);
-                    }
-                }
-            }
-            if(!pieceWeHaveButTheyDont) {
-                return;
-            }
-            for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                boolean hasPiece = false;
-                if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.EMPTY) {
-                    hasPiece = true;
-                }
-                if(hasPiece) {
-                    //Check to see if other peer has piece
-                    if (peerConnection.pieceMap.get(i) == peerProcess.pieceStatus.EMPTY) {
-                        peerConnection.requestedPieces.add(i);
-                    }
-                }
-            }
-            //Check peer's bitfield to see if there are any pieces that we don't have
-            //If there are, send an interested message
-            try {
-                // Wait 1 second
-                Thread.sleep(10000);
-//                byte[] message = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
-//                sendMessage(message);
-//                System.out.println("Sent message to peer " + peerConnection.peerId);
-//                numMessages++;
-//                System.out.println("Number of messages sent to peer " + peerConnection.peerId + ": " + numMessages);
-                //Send requestedPiece top of queue
-                int requestedPiece = peerConnection.requestedPieces.remove();
-                byte[] piece = peerConnection.hostProcess.pieceData.get(requestedPiece);
-                byte[] message = Message.generatePieceMessage(piece);
-                byte[] lengthAndType = Message.generateHeaderAndMessageType(message.length, MsgType.piece);
-//                int messageLength = message.length;
-//                byte[] messageLengthBytes = ByteBuffer.allocate(4).putInt(messageLength).array();
-//                System.out.println("Sending piece " + requestedPiece + " to peer " + peerConnection.peerId);
-//                System.out.println(message.length);
-//                byte[] overallMessage = new byte[messageLength + 4];
-//                System.arraycopy(messageLengthBytes, 0, overallMessage, 0, 4);
-//                System.arraycopy(message, 0, overallMessage, 4, messageLength);
-//                Message.Interpretation interpretation = Message.msgInterpret(overallMessage);
-//                System.out.println("Message type: " + interpretation.Msg);
-//                System.out.println("Payload length: " + interpretation.payloadLength);
-//                System.out.println("Payload: " + interpretation.messagePayload);
-                byte[] overallMessage = new byte[lengthAndType.length + message.length+4]; //+ 4 for the 4-byte piece index field
-                System.arraycopy(lengthAndType, 0, overallMessage, 0, lengthAndType.length);
-                System.arraycopy(message, 0, overallMessage, lengthAndType.length, message.length);
-                byte[] pieceIndex = ByteBuffer.allocate(4).putInt(requestedPiece).array();
-                System.arraycopy(pieceIndex, 0, overallMessage, lengthAndType.length + message.length, 4);
-                byte[] firstFourBytes = new byte[4];
-                System.arraycopy(overallMessage, 0, firstFourBytes, 0, 4);
-                int test = (int) ByteBuffer.wrap(firstFourBytes).getInt();
-                byte test2 = overallMessage[4];
-                Message.Interpretation interpretation = Message.msgInterpret(overallMessage);
-                System.out.println("Sending piece " + requestedPiece + " to peer " + peerConnection.peerId);
-
-                sendMessage(overallMessage);
-                // Process the message here
-            } catch (Exception e) {
-                return;
-            }
-
+            // Add logic to check for other types of messages to send
         }
+    }
+
+    boolean checkForPieces() {
+        if(peerConnection.hostProcess.pieceMap == null) {
+            return false;
+        }
+        if(peerConnection.hostProcess.hasAllPieces.get()) {
+            return true;
+        }
+        for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+            if (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.EMPTY && peerConnection.hostProcess.pieceMap.get(i) != null) {
+                return true;
+            }
+        }
+        return false;
     }
     void sendMessage(byte[] msg) throws IOException{
         //stream write the message
