@@ -2,14 +2,12 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 enum MsgType {
@@ -188,10 +186,12 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 //        msgInterpret();
 //    }
     //checks that the msg is valid and has the correct payload for the msg type
-    private Interpretation msgInterpret(byte[] payload){
+    public static Interpretation msgInterpret(byte[] payload){
         //4-byte message length field, 1-byte message type field, and a message payload with variable size.
         byte[] temp = new byte[4];
         System.arraycopy(payload, 0, temp, 0, 4);
+        Interpretation interpretation = new Interpretation();
+        //System.out.println("Payload: " + Arrays.toString(payload));
 
         int payloadLength = ByteBuffer.wrap(temp).getInt();
         if(payload.length < 5){
@@ -199,13 +199,15 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             msgMisinterpreter(payload);
         }
 
-        switch (payload[4]){
+        byte messageType = payload[4];
+        //System.out.println("Message Type: " + messageType);
+        switch (messageType){
             case 0 : //choke
                 if(payloadLength != 1){
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.choke;
+                    interpretation.Msg = MsgType.choke;
                 }
                 break;
             case 1 : //unchoke
@@ -213,7 +215,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.unchoke;
+                    interpretation.Msg = MsgType.unchoke;
                 }
                 break;
             case 2 : //interested
@@ -221,7 +223,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.interested;
+                    interpretation.Msg = MsgType.interested;
                 }
                 break;
             case 3 : //notInterested
@@ -229,71 +231,103 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.notInterested;
+                    interpretation.Msg = MsgType.notInterested;
                 }
                 break;
             case 4 : //have
-                if(payloadLength != 5){
+                if(payloadLength != 9){
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.have;
+                    interpretation.Msg = MsgType.have;
                 }
                 break;
             case 5 : //bitfield
-                if(payloadLength != 5){
-                    msgMisinterpreter(payload);
-                }
-                else{
-                    Msg = MsgType.bitfield;
-                }
+                interpretation.Msg = MsgType.bitfield;
                 break;
             case 6 : //request
-                if(payloadLength != 5){
+                if(payloadLength != 4){
                     msgMisinterpreter(payload);
                 }
                 else{
-                    Msg = MsgType.request;
+                    interpretation.Msg = MsgType.request;
+                    interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
                 }
                 break;
             case 7 : //piece
-                if(payloadLength != 5){
-                    msgMisinterpreter(payload);
-                }
-                else{
-                    Msg = MsgType.piece;
-                }
+                interpretation.Msg = MsgType.piece;
+                interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
+                interpretation.messagePayload = new byte[payloadLength - 4];
+                System.arraycopy(payload, 9, interpretation.messagePayload, 0, payloadLength - 4);
                 break;
             default:
+                System.out.println("Invalid message type");
                 msgMisinterpreter(payload);
                 break;
         }
         //First 5 bytes are the length (4) and the type (1) so the payload is the rest
-        String messagePayload;
-        if(payloadLength > 5){
-            temp = new byte[payloadLength - 5];
-            for(int i = 5,x= 0; i < payloadLength; i++,x++){
-                temp[x] = payload[i];
-            }
-            messagePayload = ByteBuffer.wrap(temp).toString();
-        }
-        else{
-            messagePayload = null;
-        }
-        Interpretation interpretation = new Interpretation();
-        interpretation.Msg = Msg;
+        //System.out.println("Payload Length: " + payloadLength);
+        byte[] messagePayload = new byte[payloadLength];
+        System.arraycopy(payload, 5, messagePayload, 0, payloadLength);
         interpretation.messagePayload = messagePayload;
         interpretation.payloadLength = payloadLength;
         return interpretation;
     }
 
-    private void msgMisinterpreter(byte[] payload){
+    public static byte[] generateHaveMessage(int index) {
+        // 4-byte message length field, 1-byte message type field, and a message payload with variable size.
+        // 4-byte message length field
+        int messageLength = 4;
+        byte[] haveMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.have);
+        System.arraycopy(headerAndMessageType, 0, haveMessage, 0, 5);
+
+        // message payload
+        byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
+        System.arraycopy(pieceIndex, 0, haveMessage, 5, 4);
+        return haveMessage;
+    }
+
+    private static void msgMisinterpreter(byte[] payload){
         System.out.println("Bad Message");
         //Print each byte
         for(byte b : payload){
             System.out.println(b);
         }
         System.exit(0);
+    }
+
+    public static byte[] generatePieceMessage(byte[] payload,int index) {
+        if(payload == null){
+            System.out.println("Payload is null at index " + index);
+            System.exit(0);
+        }
+        // 4-byte message length field, 1 byte message type field, 4 bytes for piece index, and a message payload with variable size.
+        int messageLength = payload.length + 4;
+        byte[] pieceMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.piece);
+        System.arraycopy(headerAndMessageType, 0, pieceMessage, 0, 5);
+
+        // message payload
+        byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
+        System.arraycopy(pieceIndex, 0, pieceMessage, 5, 4);
+        System.arraycopy(payload, 0, pieceMessage, 9, payload.length);
+        //System.out.println("Piece message length: " + pieceMessage.length);
+        return pieceMessage;
+    }
+
+    public static byte[] generateRequestMessage(int index) {
+        // 4-byte message length field, file.txt-byte message type field, and a 4 byte message payload
+        // 4-byte message length field
+        int messageLength = 4;
+        byte[] requestMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.request);
+        System.arraycopy(headerAndMessageType, 0, requestMessage, 0, 5);
+
+        // message payload
+        byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
+        System.arraycopy(pieceIndex, 0, requestMessage, 5, 4);
+        return requestMessage;
     }
 
     public String ToString(byte[] payload){
@@ -309,8 +343,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 
     public static class Interpretation {
         public MsgType Msg;
-        public String messagePayload;
+        public byte[] messagePayload;
         public int payloadLength;
+        Integer pieceIndex = null;
     }
 
     private static List<byte[]> splitFileIntoMemory(String sourceFile, int pieceSize) {
@@ -338,10 +373,22 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return filePieces;
     }
 
+    public static int getNthBit(byte[] byteArray, int n) {
+        if (byteArray == null || byteArray.length * 8 <= n) {
+            throw new IllegalArgumentException("Bit position out of range");
+        }
+
+        int byteIndex = n / 8; // Find the index of the byte containing the nth bit
+        int bitPosition = n % 8; // Find the position of the bit in that byte
+
+        // Extract the bit using a bitwise AND operation, then shift right
+        return (byteArray[byteIndex] >> (7 - bitPosition)) & 1;
+    }
+
 }
 /*
 After handshaking, each peer can send a stream of actual messages. An actual message
-consists of 4-byte message length field, 1-byte message type field, and a message
+consists of 4-byte message length field, file.txt-byte message type field, and a message
 payload with variable size.
  */
 

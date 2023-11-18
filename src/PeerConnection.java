@@ -2,20 +2,27 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PeerConnection extends Thread{
     public int peerId;
     public String peerAddress;
     public int peerPort;
-    private Socket socket;
+    Socket socket;
     OutputStream out;
     InputStream in;
     Boolean client;
-    boolean[] bitfield;
+    ConcurrentHashMap<Integer, peerProcess.pieceStatus> peerPieceMap; //pieceMap of the PEER not the host
     peerProcess.CommonCfg commonCfg;
     SendHandler sendHandler;
     ReceiveHandler receiveHandler;
     peerProcess hostProcess;
+    Queue<Integer> requestedPieces = new ConcurrentLinkedQueue<>();
+    Queue<Integer> sendResponses = new ConcurrentLinkedQueue<>();
+    AtomicBoolean peerHasAllPieces = new AtomicBoolean(false);
 
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
         super();
@@ -27,7 +34,10 @@ public class PeerConnection extends Thread{
         this.commonCfg = commonCfg;
         //Set bitfield to all 0s
         //all elements are false by default
-        bitfield = new boolean[commonCfg.numPieces];
+        peerPieceMap = new ConcurrentHashMap<>();
+        for(int i = 0; i < commonCfg.numPieces; i++) {
+            peerPieceMap.put(i, peerProcess.pieceStatus.EMPTY);
+        }
     }
 
     public void setSocket(Socket socket) {
@@ -53,7 +63,33 @@ public class PeerConnection extends Thread{
 //            System.out.println(); // New line after printing all bytes
         //if it does, send a bitfield message with all 1s
         //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
+        startHandlers(); //Starts the send and receive handlers
         close();
+    }
+
+    public void startHandlers() {
+        if(socket == null) {
+            System.out.println("Error: socket is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+        }
+        if(in == null) {
+            System.out.println("Error: in is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+        }
+        if(out == null) {
+            System.out.println("Error: out is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+        }
+        sendHandler = new SendHandler(this);
+        receiveHandler = new ReceiveHandler(this);
+
+        sendHandler.start();
+        receiveHandler.start();
+        //Starts both the send and receive handler threads
+        try {
+            sendHandler.join();
+            receiveHandler.join();
+        } catch (InterruptedException e) {
+
+        }
+        //Joining the threads will cause the program to wait until both threads are finished
     }
 
 //        public void server() {

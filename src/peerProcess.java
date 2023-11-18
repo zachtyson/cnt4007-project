@@ -1,8 +1,11 @@
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class peerProcess {
@@ -142,6 +145,8 @@ public class peerProcess {
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
+                            peerConnection.in = new DataInputStream(socket.getInputStream());
+                            peerConnection.out = new DataOutputStream(socket.getOutputStream());
                             serverWait.remove(peerConnection);
                             break;
                         }
@@ -169,10 +174,12 @@ public class peerProcess {
     public enum pieceStatus {
         EMPTY,
         REQUESTING,
-        DOWNLOADED
+        DOWNLOADED,
+        INTERESTED,
     }
     ConcurrentHashMap<Integer, pieceStatus> pieceMap;
-    ConcurrentHashMap<Integer, Byte[]> pieceData;
+    ConcurrentHashMap<Integer, byte[]> pieceData = new ConcurrentHashMap<>();
+    AtomicBoolean hasAllPieces = new AtomicBoolean(false); //Atomic boolean added for more efficiency so that we don't have to check the entire map every time
     public void close() {
         // Close all connections
         for(PeerConnection peerConnection : peerConnectionVector) {
@@ -214,10 +221,60 @@ public class peerProcess {
                         selfPeerAddress = tokens[1];
                         selfPeerId = tempPeerID;
                         pieceMap = new ConcurrentHashMap<>();
-                        for(int i = 0; i < commonCfg.numPieces; i++) {
-                            pieceMap.put(i, pieceStatus.EMPTY);
+                        if(hasFileOnStart) {
+                            for(int i = 0; i < commonCfg.numPieces; i++) {
+                                pieceMap.put(i, pieceStatus.DOWNLOADED);
+                            }
+                            // Look for presence of file
+                            File file = new File(commonCfg.fileName);
+                            if(!file.exists()) {
+                                System.out.println("Error: File " + commonCfg.fileName + " not found");
+                                System.exit(1);
+                                //Likely something went wrong on our part since PeerInfo.cfg says that the peer has the file but it doesn't
+                            }
+                            try {
+                                // Read file into byte array
+                                byte[] fileContent = Files.readAllBytes(Paths.get(commonCfg.fileName));
+                                //Split the file into pieces
+                                int fileSize = commonCfg.fileSize;
+                                int actualFileSize = fileContent.length;
+                                if (fileSize != actualFileSize) {
+                                    System.err.println("Error: File size does not match expected file size");
+                                    System.exit(1);
+                                }
+                                int pieceSize = commonCfg.pieceSize;
+                                int numPieces = commonCfg.numPieces;
+                                for (int i = 0; i < numPieces; i++) {
+                                    int start = i * pieceSize;
+                                    int length = Math.min(pieceSize, fileSize - start);
+                                    byte[] temp = new byte[length];
+                                    System.arraycopy(fileContent, start, temp, 0, length);
+                                    pieceData.put(i, temp);
+                                }
+                                for(int i = 0; i < commonCfg.numPieces; i++) {
+                                    pieceMap.put(i, pieceStatus.DOWNLOADED);
+                                    hasAllPieces.set(true);
+                                }
+                                for(int i = 0; i < commonCfg.numPieces; i++) {
+                                    if(pieceData.get(i) == null) {
+                                        System.err.println("Error: Piece " + i + " is null");
+                                        System.exit(1);
+                                    }
+                                }
+                                System.err.println("File read successfully and split into pieces");
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
+                        } else {
+                            for(int i = 0; i < commonCfg.numPieces; i++) {
+                                pieceMap.put(i, pieceStatus.EMPTY);
+                            }
                         }
-                        pieceData = new ConcurrentHashMap<>();
+//                        for(int i = 0; i < commonCfg.numPieces; i++) {
+//                            pieceMap.put(i, pieceStatus.EMPTY);
+//                        }
+//                        pieceData = new ConcurrentHashMap<>();
                     }
                     //Code above tries to connect to any peers before it, and any peers after it will connect to it
                 } catch (NumberFormatException e) {
