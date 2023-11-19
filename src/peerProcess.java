@@ -165,6 +165,8 @@ public class peerProcess {
             }
         }
     }
+
+    ConcurrentHashMap<Integer, Boolean> peerHasWholeFile = new ConcurrentHashMap<>(); //HashMap for tracking that every peer has every piece, this is required before the program can terminate
     public Vector<PeerConnection> peerConnectionVector;
     public CommonCfg commonCfg;
     public int selfPeerId;
@@ -210,6 +212,7 @@ public class peerProcess {
                         // If peer ID is not the same as the current peer, add it to the vector
                         PeerConnection peerConnection = new PeerConnection(tempPeerID, tokens[1], peerPort, this, !foundCurrentPeer, commonCfg);
                         peerConnectionVector.addElement(peerConnection);
+                        peerHasWholeFile.put(tempPeerID, false);
 
                     } else {
                         // If current peer ID is the same as the current peer, act as client and attempt to connect to all peers before it

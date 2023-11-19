@@ -30,16 +30,16 @@ public class SendHandler extends Thread {
         }
         while (true) {
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
             boolean noRequestedPieces = peerConnection.requestedPieces.isEmpty();
             boolean hasAllPieces = peerConnection.hostProcess.hasAllPieces.get();
             boolean peerHasAllPieces = peerConnection.peerHasAllPieces.get();
-            System.out.println("No requested pieces: " + noRequestedPieces);
-            System.out.println("Has all pieces: " + hasAllPieces);
-            System.out.println("Peer has all pieces: " + peerHasAllPieces);
+//            System.out.println("No requested pieces: " + noRequestedPieces);
+//            System.out.println("Has all pieces: " + hasAllPieces);
+//            System.out.println("Peer has all pieces: " + peerHasAllPieces);
             if(noRequestedPieces && !hasAllPieces && peerHasAllPieces) {
                 //If all pieces have been downloaded, respond to queue of requests
                 //If no requests, I guess just busy wait?
@@ -86,10 +86,9 @@ public class SendHandler extends Thread {
                     //If so, send them
                     if(!peerConnection.sendResponses.isEmpty()) {
                         //Send piece message
-                        int pieceIndex = peerConnection.sendResponses.remove();
-                        byte[] message = Message.generatePieceMessage(peerConnection.hostProcess.pieceData.get(pieceIndex), pieceIndex);
+                        byte[] pieceIndex = peerConnection.sendResponses.remove();
                         try {
-                            sendMessage(message);
+                            sendMessage(pieceIndex);
                             System.out.println("Sent message to peer");
                         } catch (IOException e) {
                             e.printStackTrace();

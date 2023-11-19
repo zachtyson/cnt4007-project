@@ -62,7 +62,9 @@ public class ReceiveHandler extends Thread{
                     case request:
                         System.out.println("Received request message from peer");
                         System.out.println("Piece index: " + interpretation.pieceIndex);
-                        peerConnection.sendResponses.add(interpretation.pieceIndex);
+                        byte[] pieceRequested = peerConnection.hostProcess.pieceData.get(interpretation.pieceIndex);
+                        byte[] messageToPeer = Message.generatePieceMessage(pieceRequested, interpretation.pieceIndex);
+                        peerConnection.sendResponses.add(messageToPeer);
                         break;
                     case piece:
                         System.out.println("Received piece message from peer");
@@ -70,6 +72,12 @@ public class ReceiveHandler extends Thread{
                         byte[] piece = interpretation.messagePayload;
                         peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
                         peerConnection.hostProcess.pieceData.put(pieceIndex, piece);
+                        //send message to host process that piece has been received
+                        byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
+                        System.err.println("Sending message that piece " + pieceIndex + " has been received");
+                        peerConnection.sendResponses.add(messageToHost);
+                        //Put messageToHost in the front of the queue
+
                         boolean hasAllPiecesAfterReceieve = true;
                         for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
                             if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {

@@ -21,7 +21,7 @@ public class PeerConnection extends Thread{
     ReceiveHandler receiveHandler;
     peerProcess hostProcess;
     Queue<Integer> requestedPieces = new ConcurrentLinkedQueue<>();
-    Queue<Integer> sendResponses = new ConcurrentLinkedQueue<>();
+    Queue<byte[]> sendResponses = new ConcurrentLinkedQueue<>();
     AtomicBoolean peerHasAllPieces = new AtomicBoolean(false);
 
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
