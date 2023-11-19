@@ -87,7 +87,14 @@ public class PeerConnection extends Thread{
             sendHandler.join();
             receiveHandler.join();
         } catch (InterruptedException e) {
-
+            System.out.println("Error: thread interrupted");
+            if(sendHandler.isAlive()) {
+                sendHandler.interrupt();
+            }
+            if(receiveHandler.isAlive()) {
+                receiveHandler.interrupt();
+            }
+            System.exit(1);
         }
         //Joining the threads will cause the program to wait until both threads are finished
     }
