@@ -139,6 +139,19 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return bitmapMessage;
     }
 
+    public static byte[] generateHasPieceMessage(int pieceIndex) {
+        // 4-byte message length field, 1-byte message type field, and 4 bytes for piece index
+        int messageLength = 4;
+        byte[] haveMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.have);
+        System.arraycopy(headerAndMessageType, 0, haveMessage, 0, 5);
+
+        // message payload
+        byte[] pieceIndexBytes = ByteBuffer.allocate(4).putInt(pieceIndex).array();
+        System.arraycopy(pieceIndexBytes, 0, haveMessage, 5, 4);
+        return haveMessage;
+    }
+
     public static boolean checkHandshake(byte[] handshake, int expectedPeerID) {
         if (handshake.length != 32) {
             return false;
