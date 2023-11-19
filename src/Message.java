@@ -200,7 +200,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         }
 
         byte messageType = payload[4];
-        //System.out.println("Message Type: " + messageType);
+        //System.err.println("Message Type: " + messageType);
         switch (messageType){
             case 0 : //choke
                 if(payloadLength != 1){
@@ -235,6 +235,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 4 : //have
+                System.err.println("Have message");
                 if(payloadLength != 9){
                     msgMisinterpreter(payload);
                 }
@@ -275,15 +276,19 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     public static byte[] generateHasPieceMessage(int pieceIndex) {
+        //System.out.println("Generating have message for piece " + pieceIndex);
         // 4-byte message length field, 1-byte message type field, and 4 bytes for piece index
         int messageLength = 4;
         byte[] haveMessage = new byte[messageLength + 5];
         byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.have);
         System.arraycopy(headerAndMessageType, 0, haveMessage, 0, 5);
 
+        //System.err.println(pieceIndex);
         // message payload
         byte[] pieceIndexBytes = ByteBuffer.allocate(4).putInt(pieceIndex).array();
         System.arraycopy(pieceIndexBytes, 0, haveMessage, 5, 4);
+       // System.err.println(Arrays.toString(haveMessage));
+
         return haveMessage;
     }
 
