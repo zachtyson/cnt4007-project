@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Map;
 
 public class SendHandler extends Thread {
     PeerConnection peerConnection;
@@ -63,10 +64,23 @@ public class SendHandler extends Thread {
                     }
                 }
             } else {
-                if(hasAllPieces && peerHasAllPieces) {
-                    System.out.println("Both peers have all pieces, closing connection");
+                boolean allPeersHaveWholeFile = true;
+                for(Map.Entry<Integer,Boolean> entry: peerConnection.hostProcess.peerHasWholeFile.entrySet()) {
+                    if(!entry.getValue()) {
+                        allPeersHaveWholeFile = false;
+                        break;
+                    }
+                }
+                if(hasAllPieces && allPeersHaveWholeFile) {
+                    break;
+                    // System.out.println("Both peers have all pieces, closing connection");
                     //peerConnection.close();
                 }
+//                if(hasAllPieces && allPeersHaveWholeFile) {
+//                    break;
+//                    // System.out.println("Both peers have all pieces, closing connection");
+//                    //peerConnection.close();
+//                }
                 if(hasAllPieces && !peerHasAllPieces) {
                     //Check the request queue to see if there are any pieces that the peer has requested
                     //If so, send them

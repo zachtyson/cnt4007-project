@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Map;
 
 //ReceiveHandler is in charge of receiving messages from the peer, and passing them to the host process
 //and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
@@ -12,6 +13,20 @@ public class ReceiveHandler extends Thread{
     @Override
     public void run() {
         while (true) {
+            boolean allPeersHaveWholeFile = true;
+            boolean hasAllPiecesCheckExit = peerConnection.hostProcess.hasAllPieces.get();
+
+            for(Map.Entry<Integer,Boolean> entry: peerConnection.hostProcess.peerHasWholeFile.entrySet()) {
+                if(!entry.getValue()) {
+                    allPeersHaveWholeFile = false;
+                    break;
+                }
+            }
+            if(hasAllPiecesCheckExit && allPeersHaveWholeFile) {
+                break;
+                // System.out.println("Both peers have all pieces, closing connection");
+                //peerConnection.close();
+            }
             try {
                 byte[] message = receiveMessageLength();
                 if (message.length == 0) {
@@ -65,6 +80,7 @@ public class ReceiveHandler extends Thread{
                         peerConnection.hostProcess.hasAllPieces.set(hasAllPiecesAfterReceieve);
                         if(hasAllPiecesAfterReceieve) {
                             System.out.println("Host has all pieces");
+                            peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                         }
                         break;
                     case bitfield:
@@ -91,6 +107,7 @@ public class ReceiveHandler extends Thread{
                         }
                         if(hasAllPieces) {
                             System.out.println("Peer has all pieces");
+                            peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                         }
                         break;
                     default:
