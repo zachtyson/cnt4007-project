@@ -13,6 +13,8 @@ public class ReceiveHandler extends Thread{
     @Override
     public void run() {
         while (true) {
+            //check if socket is closed
+
             boolean allPeersHaveWholeFile = true;
             boolean hasAllPiecesCheckExit = peerConnection.hostProcess.hasAllPieces.get();
 
@@ -124,11 +126,17 @@ public class ReceiveHandler extends Thread{
                 }
             } catch (IOException e) {
                 //e.printStackTrace();
+                System.out.println("Connection closed");
+                peerConnection.close();
+                break;
             }
         }
     }
     byte[] receiveMessageLength() throws IOException {
         byte[] expectedLength = peerConnection.in.readNBytes(4);
+        if (expectedLength.length < 4) {
+            throw new IOException("Connection closed or insufficient data read for message length");
+        }
 
         ByteBuffer wrapped = ByteBuffer.wrap(expectedLength);
         int expectedLengthInt = wrapped.getInt();
