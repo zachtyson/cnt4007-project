@@ -192,12 +192,14 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         System.arraycopy(payload, 0, temp, 0, 4);
         Interpretation interpretation = new Interpretation();
         //System.out.println("Payload: " + Arrays.toString(payload));
-
-        int payloadLength = ByteBuffer.wrap(temp).getInt();
+        int payloadLengthTemp = ByteBuffer.wrap(temp).getInt();
+        long payloadLengthTempLong = payloadLengthTemp & 0xffffffffL; //converts to unsigned int
+        int payloadLength = (int) payloadLengthTempLong; //converts back to int
         if(payload.length < 5){
             //message is too short and doesn't even have a message type
             msgMisinterpreter(payload);
         }
+
 
         byte messageType = payload[4];
         //System.err.println("Message Type: " + messageType);
@@ -236,12 +238,13 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 break;
             case 4 : //have
                 System.err.println("Have message");
-                if(payloadLength != 9){
-                    msgMisinterpreter(payload);
-                }
-                else{
-                    interpretation.Msg = MsgType.have;
-                }
+                interpretation.Msg = MsgType.have;
+                System.err.println(Arrays.toString(payload));
+                //index is the 4 bytes after the message type
+                int haveIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
+                long haveIndexLong = haveIndex & 0xffffffffL; //converts to unsigned int
+                interpretation.pieceIndex = (int) haveIndexLong; //converts back to int
+
                 break;
             case 5 : //bitfield
                 interpretation.Msg = MsgType.bitfield;
@@ -287,7 +290,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         // message payload
         byte[] pieceIndexBytes = ByteBuffer.allocate(4).putInt(pieceIndex).array();
         System.arraycopy(pieceIndexBytes, 0, haveMessage, 5, 4);
-       // System.err.println(Arrays.toString(haveMessage));
+        // System.err.println(Arrays.toString(haveMessage));
 
         return haveMessage;
     }

@@ -32,7 +32,7 @@ public class SendHandler extends Thread {
         //todo: request a piece, wait for it, send a has message, and then request another piece
         while (true) {
             try {
-                Thread.sleep(100);
+                Thread.sleep(10);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -74,7 +74,15 @@ public class SendHandler extends Thread {
                     }
                 }
                 if(hasAllPieces && allPeersHaveWholeFile) {
-                    break;
+                    System.out.println(Arrays.toString(peerConnection.sendResponses.peek()));
+                    try {
+                        sendMessage(peerConnection.sendResponses.remove());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    if(peerConnection.sendResponses.isEmpty()) {
+                        break;
+                    }
                     // System.out.println("Both peers have all pieces, closing connection");
                     //peerConnection.close();
                 }
