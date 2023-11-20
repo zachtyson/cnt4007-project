@@ -31,6 +31,10 @@ public class SendHandler extends Thread {
         //todo: currently how it works is that it requests all the pieces at once, but what it SHOULD do is
         //todo: request a piece, wait for it, send a has message, and then request another piece
         while (true) {
+            //check to see if peerConnection.socket is closed
+            if(peerConnection.socket.isClosed()) {
+                break;
+            }
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
