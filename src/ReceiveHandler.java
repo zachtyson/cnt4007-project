@@ -72,6 +72,8 @@ public class ReceiveHandler extends Thread{
                         System.out.println("Received piece message from peer");
                         int pieceIndex = interpretation.pieceIndex;
                         byte[] piece = interpretation.messagePayload;
+                        peerConnection.currentlyRequestedPiece.set(-1); //Set to -1 to indicate that no piece is currently being requested
+                        System.err.println("Currently requested piece set to -1");
                         peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
                         peerConnection.hostProcess.pieceData.put(pieceIndex, piece);
                         //send message to host process that piece has been received
