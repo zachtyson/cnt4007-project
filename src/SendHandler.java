@@ -36,7 +36,7 @@ public class SendHandler extends Thread {
                 break;
             }
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -98,28 +98,32 @@ public class SendHandler extends Thread {
                 if(hasAllPieces && !peerHasAllPieces) {
                     //Check the request queue to see if there are any pieces that the peer has requested
                     //If so, send them
-                    if(!peerConnection.sendResponses.isEmpty()) {
-                        //Send piece message
-                        byte[] pieceIndex = peerConnection.sendResponses.remove();
-                        try {
-                            sendMessage(pieceIndex);
-                            System.out.println("Sent message to peer");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
                 }
             }
-
-            if (!peerConnection.requestedPieces.isEmpty()) {
+            //Prioritize sending have messages over sending requests and pieces
+            if(!peerConnection.sendResponses.isEmpty()) {
                 //Send piece message
-                int pieceIndex = peerConnection.requestedPieces.remove();
-                byte[] message = Message.generateRequestMessage(pieceIndex);
+                byte[] pieceIndex = peerConnection.sendResponses.remove();
                 try {
-                    sendMessage(message);
+                    sendMessage(pieceIndex);
                     System.out.println("Sent message to peer");
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+            }
+            else if (!peerConnection.requestedPieces.isEmpty()) {
+                //Send piece message
+                if(peerConnection.currentlyRequestedPiece.get() == -1) {
+                    int pieceIndex = peerConnection.requestedPieces.remove();
+                    byte[] message = Message.generateRequestMessage(pieceIndex);
+                    try {
+                        //Checks to see if a piece is already requested from this peer
+                        sendMessage(message);
+                        peerConnection.currentlyRequestedPiece.set(pieceIndex);
+                        System.out.println("Sent message to peer");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             }
             // Add logic to check for other types of messages to send
