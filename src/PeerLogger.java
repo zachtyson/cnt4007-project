@@ -118,4 +118,10 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the piece " + pieceIndex + " from " + neighborID + ". Now the number of pieces it has is " + numPieces + ".");
     }
 
+    public void logCompletetion(String peerID) {
+        //Whenever a peer downloads the complete file, it generates the following log:
+        //[Time]: Peer [peer_ID] has downloaded the complete file.
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the complete file.");
+    }
+
 }
