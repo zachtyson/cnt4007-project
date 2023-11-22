@@ -92,4 +92,22 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'have' message from " + neighborID + " for the piece " + pieceIndex + ".");
     }
 
+    public void logReceiveInterested(String peerID, String neighborID) {
+        //Whenever a peer receives an ‘interested’ message, it generates the following log:
+        //[Time]: Peer [peer_ID 1] received the ‘interested’ message from [peer_ID 2].
+        //[peer_ID 1] represents the peer who received the ‘interested’ message and [peer_ID 2]
+        //represents the peer who sent the message.
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'interested' message from " + neighborID + ".");
+    }
+
+    public void logReceiveNotInterested(String peerID, String neighborID) {
+        //Whenever a peer receives a ‘not interested’ message, it generates the following log:
+        //[Time]: Peer [peer_ID 1] received the ‘not interested’ message from [peer_ID 2].
+        //[peer_ID 1] represents the peer who received the ‘not interested’ message and [peer_ID
+        //2] represents the peer who sent the message.
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'not interested' message from " + neighborID + ".");
+    }
+
+
+
 }
