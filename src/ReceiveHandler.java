@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Vector;
 
 //ReceiveHandler is in charge of receiving messages from the peer, and passing them to the host process
 //and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
@@ -80,6 +81,9 @@ public class ReceiveHandler extends Thread{
                         byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
                         System.err.println("Sending message that piece " + pieceIndex + " has been received");
                         peerConnection.sendResponses.add(messageToHost);
+                        for(PeerConnection peerConnection: peerConnection.hostProcess.peerConnectionVector) {
+                            peerConnection.sendResponses.add(messageToHost);
+                        }
                         //Put messageToHost in the front of the queue
 
                         boolean hasAllPiecesAfterReceieve = true;
