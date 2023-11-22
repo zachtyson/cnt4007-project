@@ -50,23 +50,21 @@ public class SendHandler extends Thread {
                 //If all pieces have been downloaded, respond to queue of requests
                 //If no requests, I guess just busy wait?
                 //Queue requests to send
+                //todo: only add one request at a time
                 for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                    if (peerConnection.peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
-                        // Check if the piece is neither downloaded nor currently being requested by this peer,
-                        // and also not already in the requested pieces set. Includes a null check.
-                        if ((peerConnection.hostProcess.pieceMap.get(i) == null ||
-                                (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED &&
-                                        peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.REQUESTING))
-                                && !peerConnection.requestedPieces.contains(i)) {
+                    // Check if the piece is neither downloaded nor currently being requested by this peer,
+                    // along with that, make sure that sendResponses is empty, requests one piece at a time
+                    // this is so that each peer has a chance to request a piece from any other peer
+                    // so basically this is picks a random piece to request
+                    if ((peerConnection.hostProcess.pieceMap.get(i) == null ||
+                            (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED &&
+                                    peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.REQUESTING))
+                            && !peerConnection.requestedPieces.contains(i) && peerConnection.sendResponses.isEmpty()) {
 
-                            peerConnection.requestedPieces.add(i);
-                            peerConnection.hostProcess.pieceMap.put(i, peerProcess.pieceStatus.REQUESTING);
-                            System.out.println("Added piece " + i + " to requested pieces");
-                        }
-                    }
-
-                    else {
-                        System.out.println("Did not add piece " + i + " to requested pieces");
+                        peerConnection.requestedPieces.add(i);
+                        peerConnection.hostProcess.pieceMap.put(i, peerProcess.pieceStatus.REQUESTING);
+                        System.out.println("Added piece " + i + " to requested pieces");
+                        break;
                     }
                 }
             } else {
@@ -106,7 +104,7 @@ public class SendHandler extends Thread {
                 byte[] pieceIndex = peerConnection.sendResponses.remove();
                 try {
                     sendMessage(pieceIndex);
-                    System.out.println("Sent message to peer");
+                    System.out.println("Sent message to peer (have)");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
