@@ -19,11 +19,11 @@ public class PeerLogger {
         logger.addHandler(fileHandler);
     }
 
-    private String getTimestamp() {
+    private synchronized String getTimestamp() {
         return java.time.LocalDateTime.now().toString();
     }
 
-    public void logTCPConnection(String peerID, String peerID2) {
+    public synchronized void logTCPConnection(String peerID, String peerID2) {
         //TCP connection
         //Whenever a peer makes a TCP connection to other peer, it generates the following log:
         //[Time]: Peer [peer_ID 1] makes a connection to Peer [peer_ID 2].
@@ -33,7 +33,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " makes a connection to Peer " + peerID2 + ".");
     }
 
-    public void logChangePreferredNeighbors(String peerID, Vector<String> listNeighbors) {
+    public synchronized void logChangePreferredNeighbors(String peerID, Vector<String> listNeighbors) {
         //Change of preferred neighbors
         //Whenever a peer changes its preferred neighbors, it generates the following log:
         //[Time]: Peer [peer_ID] has the preferred neighbors [preferred neighbor ID list].
@@ -54,7 +54,7 @@ public class PeerLogger {
         logger.info(log.toString());
     }
 
-    public void logChangeOptimisticallyUnchokedNeighbor(String peerID, String neighborID) {
+    public synchronized void logChangeOptimisticallyUnchokedNeighbor(String peerID, String neighborID) {
         //Whenever a peer changes its optimistically unchoked neighbor, it generates the following
         //log:
         //[Time]: Peer [peer_ID] has the optimistically unchoked neighbor [optimistically
@@ -64,7 +64,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " has the optimistically unchoked neighbor " + neighborID + ".");
     }
 
-    public void logUnchoking(String peerID, String neighborID) {
+    public synchronized void logUnchoking(String peerID, String neighborID) {
         //Whenever a peer is unchoked by a neighbor (which means when a peer receives an
         //unchoking message from a neighbor), it generates the following log:
         //[Time]: Peer [peer_ID 1] is unchoked by [peer_ID 2].
@@ -73,7 +73,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " is unchoked by " + neighborID + ".");
     }
 
-    public void logChoking(String peerID, String neighborID) {
+    public synchronized void logChoking(String peerID, String neighborID) {
         //Whenever a peer is choked by a neighbor (which means when a peer receives a choking
         //message from a neighbor), it generates the following log:
         //[Time]: Peer [peer_ID 1] is choked by [peer_ID 2].
@@ -82,7 +82,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " is choked by " + neighborID + ".");
     }
 
-    public void logReceiveHave(String peerID, String neighborID, int pieceIndex) {
+    public synchronized void logReceiveHave(String peerID, String neighborID, int pieceIndex) {
         //Whenever a peer receives a ‘have’ message, it generates the following log:
         //[Time]: Peer [peer_ID 1] received the ‘have’ message from [peer_ID 2] for the piece
         //[piece index].
@@ -92,7 +92,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'have' message from " + neighborID + " for the piece " + pieceIndex + ".");
     }
 
-    public void logReceiveInterested(String peerID, String neighborID) {
+    public synchronized void logReceiveInterested(String peerID, String neighborID) {
         //Whenever a peer receives an ‘interested’ message, it generates the following log:
         //[Time]: Peer [peer_ID 1] received the ‘interested’ message from [peer_ID 2].
         //[peer_ID 1] represents the peer who received the ‘interested’ message and [peer_ID 2]
@@ -100,7 +100,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'interested' message from " + neighborID + ".");
     }
 
-    public void logReceiveNotInterested(String peerID, String neighborID) {
+    public synchronized void logReceiveNotInterested(String peerID, String neighborID) {
         //Whenever a peer receives a ‘not interested’ message, it generates the following log:
         //[Time]: Peer [peer_ID 1] received the ‘not interested’ message from [peer_ID 2].
         //[peer_ID 1] represents the peer who received the ‘not interested’ message and [peer_ID
@@ -108,7 +108,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'not interested' message from " + neighborID + ".");
     }
 
-    public void logDownloadedPiece(String peerID, String neighborID, int pieceIndex, int numPieces) {
+    public synchronized void logDownloadedPiece(String peerID, String neighborID, int pieceIndex, int numPieces) {
         //Whenever a peer finishes downloading a piece, it generates the following log:
         //[Time]: Peer [peer_ID 1] has downloaded the piece [piece index] from [peer_ID 2]. Now
         //the number of pieces it has is [number of pieces].
@@ -118,7 +118,7 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the piece " + pieceIndex + " from " + neighborID + ". Now the number of pieces it has is " + numPieces + ".");
     }
 
-    public void logCompletetion(String peerID) {
+    public synchronized void logCompletetion(String peerID) {
         //Whenever a peer downloads the complete file, it generates the following log:
         //[Time]: Peer [peer_ID] has downloaded the complete file.
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the complete file.");
