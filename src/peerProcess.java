@@ -65,24 +65,32 @@ public class peerProcess {
             System.out.println("Error: PeerInfo.cfg not found");
         }
         // Start listening for connections to ServerSocket
-        startListening();
-        // Start connecting to peers before it
-        startConnection();
+        try {
+            startListening();
+            startConnection();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.err.println("All peers terminated");
+
+
     }
 
-    public void startListening() {
+    public void startListening() throws InterruptedException {
         // Listens for connections to ServerSocket
         // Then after a handshake the new socket is redirected to the appropriate PeerConnection
         ServerSocketThread serverSocketThread = new ServerSocketThread(this.selfPeerPort, this);
         serverSocketThread.start();
+        serverSocketThread.join();
     }
 
-    public void startConnection() {
+    public void startConnection() throws InterruptedException{
         // Each peer tries to connect to all peers before it
         // to each peer's ServerSocket
         for(PeerConnection peerConnection : this.peerConnectionVector) {
             if(peerConnection.client) {
                 peerConnection.start();
+                peerConnection.join();
             }
         }
     }
@@ -147,6 +155,7 @@ public class peerProcess {
                             peerConnection.start();
                             peerConnection.in = new DataInputStream(socket.getInputStream());
                             peerConnection.out = new DataOutputStream(socket.getOutputStream());
+                            peerConnection.join();
                             serverWait.remove(peerConnection);
                             break;
                         }
@@ -162,6 +171,8 @@ public class peerProcess {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         }
     }
