@@ -82,4 +82,14 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " is choked by " + neighborID + ".");
     }
 
+    public void logReceiveHave(String peerID, String neighborID, int pieceIndex) {
+        //Whenever a peer receives a ‘have’ message, it generates the following log:
+        //[Time]: Peer [peer_ID 1] received the ‘have’ message from [peer_ID 2] for the piece
+        //[piece index].
+        //[peer_ID 1] represents the peer who received the ‘have’ message and [peer_ID 2]
+        //represents the peer who sent the message. [piece index] is the piece index contained in
+        //the message
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'have' message from " + neighborID + " for the piece " + pieceIndex + ".");
+    }
+
 }
