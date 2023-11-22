@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.util.Vector;
 import java.util.logging.*;
 
 //Wrapper class for the logger
@@ -30,6 +31,27 @@ public class PeerLogger {
         //from [peer_ID 1]. The [Time] field represents the current time, which contains the date,
         //hour, minute, and second. The format of [Time] is up to you.
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " makes a connection to Peer " + peerID2 + ".");
+    }
+
+    public void logChangePreferredNeighbors(String peerID, Vector<String> listNeighbors) {
+        //Change of preferred neighbors
+        //Whenever a peer changes its preferred neighbors, it generates the following log:
+        //[Time]: Peer [peer_ID] has the preferred neighbors [preferred neighbor ID list].
+        //The [Time] field represents the current time, which contains the date, hour, minute,
+        //and second. The format of [Time] is up to you. [peer_ID] is the ID of peer who
+        //generates the log. [preferred neighbor ID list] is the list of preferred neighbors of
+        //[peer_ID]. The format of [preferred neighbor ID list] is “[peer_ID 1], [peer_ID 2], ...,
+        //[peer_ID m]”, where [peer_ID 1], [peer_ID 2], ..., [peer_ID m] are the IDs of preferred
+        //neighbors of [peer_ID]. Note that the list of preferred neighbors may change over
+        //time. You should log the latest list of preferred neighbors of a peer.
+        StringBuilder log = new StringBuilder("[" + getTimestamp() + "] Peer " + peerID + " has the preferred neighbors ");
+        for (int i = 0; i < listNeighbors.size(); i++) {
+            log.append(listNeighbors.get(i));
+            if (i != listNeighbors.size() - 1) {
+                log.append(", ");
+            }
+        }
+        logger.info(log.toString());
     }
 
 }
