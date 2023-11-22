@@ -57,6 +57,8 @@ public class peerProcess {
         //currentPeerProcess.close();
     }
 
+    public PeerLogger logger;
+
     public peerProcess(int currentPeerID) {
         // Reads Common.cfg and PeerInfo.cfg
         try {
@@ -64,6 +66,12 @@ public class peerProcess {
             this.peerConnectionVector = getPeers(currentPeerID);
         } catch (IOException e) {
             System.out.println("Error: PeerInfo.cfg not found");
+        }
+        try {
+            logger = new PeerLogger(currentPeerID);
+        } catch (IOException e) {
+            System.err.println("Error: Could not create logger");
+            System.exit(1);
         }
         // Start listening for connections to ServerSocket
         try {
