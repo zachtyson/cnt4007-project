@@ -64,4 +64,15 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " has the optimistically unchoked neighbor " + neighborID + ".");
     }
 
+    public void logUnchoking(String peerID, String neighborID) {
+        //Whenever a peer is unchoked by a neighbor (which means when a peer receives an
+        //unchoking message from a neighbor), it generates the following log:
+        //[Time]: Peer [peer_ID 1] is unchoked by [peer_ID 2].
+        //[peer_ID 1] represents the peer who is unchoked and [peer_ID 2] represents the peer
+        //who unchokes [peer_ID 1].
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " is unchoked by " + neighborID + ".");
+    }
+
+
+
 }
