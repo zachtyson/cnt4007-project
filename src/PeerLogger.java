@@ -108,6 +108,14 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'not interested' message from " + neighborID + ".");
     }
 
-
+    public void logDownloadedPiece(String peerID, String neighborID, int pieceIndex, int numPieces) {
+        //Whenever a peer finishes downloading a piece, it generates the following log:
+        //[Time]: Peer [peer_ID 1] has downloaded the piece [piece index] from [peer_ID 2]. Now
+        //the number of pieces it has is [number of pieces].
+        //[peer_ID 1] represents the peer who downloaded the piece and [peer_ID 2] represents
+        //the peer who sent the piece. [piece index] is the piece index the peer has downloaded.
+        //[number of pieces] represents the number of pieces the peer currently has.
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the piece " + pieceIndex + " from " + neighborID + ". Now the number of pieces it has is " + numPieces + ".");
+    }
 
 }
