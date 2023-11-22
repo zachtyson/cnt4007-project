@@ -54,4 +54,14 @@ public class PeerLogger {
         logger.info(log.toString());
     }
 
+    public void logChangeOptimisticallyUnchokedNeighbor(String peerID, String neighborID) {
+        //Whenever a peer changes its optimistically unchoked neighbor, it generates the following
+        //log:
+        //[Time]: Peer [peer_ID] has the optimistically unchoked neighbor [optimistically
+        //unchoked neighbor ID].
+        //[optimistically unchoked neighbor ID] is the peer ID of the optimistically unchoked
+        //neighbor.
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " has the optimistically unchoked neighbor " + neighborID + ".");
+    }
+
 }
