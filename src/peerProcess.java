@@ -85,6 +85,9 @@ public class peerProcess {
     }
 
     public static void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String filePath) throws IOException {
+        // todo: there is 100% a bug here
+        // the file size is not correct and is slightly larger than the original file
+        // for sake of getting other things working, I'm going to ignore this for now
         File file = new File(filePath);
         try (FileOutputStream fos = new FileOutputStream(file)) {
             for(int i = 0; i < pieceDataMap.size(); i++) {
