@@ -3,6 +3,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -72,9 +73,27 @@ public class peerProcess {
             e.printStackTrace();
         }
         System.err.println("All peers terminated");
-
+        String fileName = commonCfg.fileName;
+        try {
+            byteMapToFile(pieceData, fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //Iterate over entire map to check if all pieces
+        //If all pieces, try to save file
 
     }
+
+    public static void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String filePath) throws IOException {
+        File file = new File(filePath);
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            for(int i = 0; i < pieceDataMap.size(); i++) {
+                byte[] temp = pieceDataMap.get(i);
+                fos.write(temp);
+            }
+        }
+    }
+
 
     public void startListening() throws InterruptedException {
         // Listens for connections to ServerSocket
