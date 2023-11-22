@@ -73,6 +73,13 @@ public class PeerLogger {
         logger.info("[" + getTimestamp() + "] Peer " + peerID + " is unchoked by " + neighborID + ".");
     }
 
-
+    public void logChoking(String peerID, String neighborID) {
+        //Whenever a peer is choked by a neighbor (which means when a peer receives a choking
+        //message from a neighbor), it generates the following log:
+        //[Time]: Peer [peer_ID 1] is choked by [peer_ID 2].
+        //[peer_ID 1] represents the peer who is choked and [peer_ID 2] represents the peer who
+        //chokes [peer_ID 1].
+        logger.info("[" + getTimestamp() + "] Peer " + peerID + " is choked by " + neighborID + ".");
+    }
 
 }
