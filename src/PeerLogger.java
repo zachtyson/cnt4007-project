@@ -25,7 +25,9 @@ public class PeerLogger {
     static class CustomFormatter extends Formatter {
         @Override
         public String format(LogRecord record) {
-            return "[" + getTimestamp() + "] " + record.getMessage() + "\n";
+            String timestamp = getTimestamp();
+            timestamp = String.format("%-29s", timestamp);
+            return "[" + timestamp + "] " + record.getMessage() + "\n";
         }
     }
 
