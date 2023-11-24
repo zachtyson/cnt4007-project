@@ -25,11 +25,11 @@ public class PeerLogger {
     static class CustomFormatter extends Formatter {
         @Override
         public String format(LogRecord record) {
-            return record.getMessage() + "\n";
+            return "[" + getTimestamp() + "] " + record.getMessage() + "\n";
         }
     }
 
-    private synchronized String getTimestamp() {
+    private static synchronized String getTimestamp() {
         return java.time.LocalDateTime.now().toString();
     }
 
@@ -41,9 +41,9 @@ public class PeerLogger {
         //from [peer_ID 1]. The [Time] field represents the current time, which contains the date,
         //hour, minute, and second. The format of [Time] is up to you.
         if(isServer) {
-            logger.info("[" + getTimestamp() + "] Peer " + peerID + " is connected from Peer " + peerID2 + ".");
+            logger.info("Peer " + peerID + " is connected from Peer " + peerID2 + ".");
         } else {
-            logger.info("[" + getTimestamp() + "] Peer " + peerID + " makes a connection to Peer " + peerID2 + ".");
+            logger.info("Peer " + peerID + " makes a connection to Peer " + peerID2 + ".");
         }
     }
 
@@ -58,7 +58,7 @@ public class PeerLogger {
         //[peer_ID m]”, where [peer_ID 1], [peer_ID 2], ..., [peer_ID m] are the IDs of preferred
         //neighbors of [peer_ID]. Note that the list of preferred neighbors may change over
         //time. You should log the latest list of preferred neighbors of a peer.
-        StringBuilder log = new StringBuilder("[" + getTimestamp() + "] Peer " + peerID + " has the preferred neighbors ");
+        StringBuilder log = new StringBuilder("Peer " + peerID + " has the preferred neighbors ");
         for (int i = 0; i < listNeighbors.size(); i++) {
             log.append(listNeighbors.get(i));
             if (i != listNeighbors.size() - 1) {
@@ -75,7 +75,7 @@ public class PeerLogger {
         //unchoked neighbor ID].
         //[optimistically unchoked neighbor ID] is the peer ID of the optimistically unchoked
         //neighbor.
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " has the optimistically unchoked neighbor " + neighborID + ".");
+        logger.info("Peer " + peerID + " has the optimistically unchoked neighbor " + neighborID + ".");
     }
 
     public synchronized void logUnchoking(String neighborID) {
@@ -84,7 +84,7 @@ public class PeerLogger {
         //[Time]: Peer [peer_ID 1] is unchoked by [peer_ID 2].
         //[peer_ID 1] represents the peer who is unchoked and [peer_ID 2] represents the peer
         //who unchokes [peer_ID 1].
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " is unchoked by " + neighborID + ".");
+        logger.info("Peer " + peerID + " is unchoked by " + neighborID + ".");
     }
 
     public synchronized void logChoking(String neighborID) {
@@ -93,7 +93,7 @@ public class PeerLogger {
         //[Time]: Peer [peer_ID 1] is choked by [peer_ID 2].
         //[peer_ID 1] represents the peer who is choked and [peer_ID 2] represents the peer who
         //chokes [peer_ID 1].
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " is choked by " + neighborID + ".");
+        logger.info("Peer " + peerID + " is choked by " + neighborID + ".");
     }
 
     public synchronized void logReceiveHave(String neighborID, int pieceIndex) {
@@ -103,7 +103,7 @@ public class PeerLogger {
         //[peer_ID 1] represents the peer who received the ‘have’ message and [peer_ID 2]
         //represents the peer who sent the message. [piece index] is the piece index contained in
         //the message
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'have' message from " + neighborID + " for the piece " + pieceIndex + ".");
+        logger.info("Peer " + peerID + " received the 'have' message from " + neighborID + " for the piece " + pieceIndex + ".");
     }
 
     public synchronized void logReceiveInterested(String neighborID) {
@@ -111,7 +111,7 @@ public class PeerLogger {
         //[Time]: Peer [peer_ID 1] received the ‘interested’ message from [peer_ID 2].
         //[peer_ID 1] represents the peer who received the ‘interested’ message and [peer_ID 2]
         //represents the peer who sent the message.
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'interested' message from " + neighborID + ".");
+        logger.info("Peer " + peerID + " received the 'interested' message from " + neighborID + ".");
     }
 
     public synchronized void logReceiveNotInterested(String neighborID) {
@@ -119,7 +119,7 @@ public class PeerLogger {
         //[Time]: Peer [peer_ID 1] received the ‘not interested’ message from [peer_ID 2].
         //[peer_ID 1] represents the peer who received the ‘not interested’ message and [peer_ID
         //2] represents the peer who sent the message.
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " received the 'not interested' message from " + neighborID + ".");
+        logger.info("Peer " + peerID + " received the 'not interested' message from " + neighborID + ".");
     }
 
     public synchronized void logDownloadedPiece(String neighborID, int pieceIndex, int numPieces) {
@@ -129,13 +129,13 @@ public class PeerLogger {
         //[peer_ID 1] represents the peer who downloaded the piece and [peer_ID 2] represents
         //the peer who sent the piece. [piece index] is the piece index the peer has downloaded.
         //[number of pieces] represents the number of pieces the peer currently has.
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the piece " + pieceIndex + " from " + neighborID + ". Now the number of pieces it has is " + numPieces + ".");
+        logger.info("Peer " + peerID + " has downloaded the piece " + pieceIndex + " from " + neighborID + ". Now the number of pieces it has is " + numPieces + ".");
     }
 
     public synchronized void logCompletion() {
         //Whenever a peer downloads the complete file, it generates the following log:
         //[Time]: Peer [peer_ID] has downloaded the complete file.
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " has downloaded the complete file.");
+        logger.info("Peer " + peerID + " has downloaded the complete file.");
     }
 
 }
