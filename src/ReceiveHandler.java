@@ -61,6 +61,7 @@ public class ReceiveHandler extends Thread{
                         break;
                     case have:
                         System.out.println("Received have message from peer");
+                        peerConnection.hostProcess.logger.logReceiveHave(String.valueOf(peerConnection.peerId), interpretation.pieceIndex);
                         break;
                     case request:
                         System.out.println("Received request message from peer");
@@ -98,6 +99,13 @@ public class ReceiveHandler extends Thread{
                             System.out.println("Host has all pieces");
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                         }
+                        int numPiecesLeft = 0;
+                        for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                            if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                                numPiecesLeft++;
+                            }
+                        }
+                        peerConnection.hostProcess.logger.logDownloadedPiece(String.valueOf(peerConnection.peerId), pieceIndex, numPiecesLeft);
                         break;
                     case bitfield:
                         System.out.println("Received bitfield message from peer");
