@@ -55,6 +55,10 @@ public class PeerConnection extends Thread{
             System.out.println("Error: client is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
         } else if (client) {
             client();
+            hostProcess.logger.logTCPConnection(String.valueOf(peerId),false);
+        } else if (!client) {
+            // server uses the socket found in peerProcess.java, so there is no process here it's handled by the main thread
+            hostProcess.logger.logTCPConnection(String.valueOf(peerId),true);
         }
         //at this point the connection is established and handshake is done, and we can start sending/receiving messages
         //check if current peer has the file DONE AT STARTUP

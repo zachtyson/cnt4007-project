@@ -68,6 +68,7 @@ public class StartRemotePeers {
             copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "SendHandler.java");
             copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "ReceiveHandler.java");
             copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "PeerConnection.java");
+            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "PeerLogger.java");
             if(peerInfo.hasFileOnStart) {
                 copyFile(path, peerFolderFile.getAbsolutePath(), "thefile");
             }
