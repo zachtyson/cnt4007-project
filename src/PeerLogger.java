@@ -17,9 +17,16 @@ public class PeerLogger {
         logger.setUseParentHandlers(false);
 
         Handler fileHandler = new FileHandler("log_peer_" + peerID + ".log");
-        fileHandler.setFormatter(new SimpleFormatter());
+        fileHandler.setFormatter(new CustomFormatter());
         logger.addHandler(fileHandler);
         this.peerID = String.valueOf(peerID);
+    }
+
+    static class CustomFormatter extends Formatter {
+        @Override
+        public String format(LogRecord record) {
+            return record.getMessage() + "\n";
+        }
     }
 
     private synchronized String getTimestamp() {
