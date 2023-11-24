@@ -101,7 +101,7 @@ public class ReceiveHandler extends Thread{
                         }
                         int numPiecesLeft = 0;
                         for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                            if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                            if(peerConnection.hostProcess.pieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
                                 numPiecesLeft++;
                             }
                         }
