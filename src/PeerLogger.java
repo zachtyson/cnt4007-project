@@ -26,14 +26,18 @@ public class PeerLogger {
         return java.time.LocalDateTime.now().toString();
     }
 
-    public synchronized void logTCPConnection(String peerID2) {
+    public synchronized void logTCPConnection(String peerID2, boolean isServer) {
         //TCP connection
         //Whenever a peer makes a TCP connection to other peer, it generates the following log:
         //[Time]: Peer [peer_ID 1] makes a connection to Peer [peer_ID 2].
         //[peer_ID 1] is the ID of peer who generates the log, [peer_ID 2] is the peer connected
         //from [peer_ID 1]. The [Time] field represents the current time, which contains the date,
         //hour, minute, and second. The format of [Time] is up to you.
-        logger.info("[" + getTimestamp() + "] Peer " + peerID + " makes a connection to Peer " + peerID2 + ".");
+        if(isServer) {
+            logger.info("[" + getTimestamp() + "] Peer " + peerID + " is connected from Peer " + peerID2 + ".");
+        } else {
+            logger.info("[" + getTimestamp() + "] Peer " + peerID + " makes a connection to Peer " + peerID2 + ".");
+        }
     }
 
     public synchronized void logChangePreferredNeighbors(Vector<String> listNeighbors) {
