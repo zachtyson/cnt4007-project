@@ -87,6 +87,7 @@ public class peerProcess {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        logger.logCompletion();
         //Iterate over entire map to check if all pieces
         //If all pieces, try to save file
 
