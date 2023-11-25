@@ -132,6 +132,7 @@ public class ReceiveHandler extends Thread{
                         if(hasAllPieces) {
                             System.out.println("Peer has all pieces");
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
+                            peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
                         break;
                     default:
