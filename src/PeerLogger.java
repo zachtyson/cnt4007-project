@@ -140,4 +140,10 @@ public class PeerLogger {
         logger.info("Peer " + peerID + " has downloaded the complete file.");
     }
 
+    public synchronized void logPeerCompletion(String peerID) {
+        //Whenever a peer downloads the complete file, it generates the following log:
+        //[Time]: Peer [peer_ID] has downloaded the complete file.
+        logger.info("Peer " + peerID + " has downloaded the complete file.");
+    }
+
 }
