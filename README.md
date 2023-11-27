@@ -1,5 +1,5 @@
 # P2P File Sharing System (CNT-4007)
-Group Members: Courtney Leu, Anderson Allen, Zachary Tyson, Jackson Berbette
+Group Members: Courtney Leu, Anderson Allen, Zachary Tyson
 
 A Peer-to-Peer (P2P) file-sharing system implementation guide based on the BitTorrent protocol.
 
