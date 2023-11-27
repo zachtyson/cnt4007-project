@@ -90,15 +90,6 @@ public class SendHandler extends Thread {
                     // System.out.println("Both peers have all pieces, closing connection");
                     //peerConnection.close();
                 }
-//                if(hasAllPieces && allPeersHaveWholeFile) {
-//                    break;
-//                    // System.out.println("Both peers have all pieces, closing connection");
-//                    //peerConnection.close();
-//                }
-                if (hasAllPieces && !peerHasAllPieces) {
-                    //Check the request queue to see if there are any pieces that the peer has requested
-                    //If so, send them
-                }
             }
             //Prioritize sending have messages over sending requests and pieces
             if (!peerConnection.sendResponses.isEmpty()) {
