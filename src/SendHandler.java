@@ -76,17 +76,16 @@ public class SendHandler extends Thread {
                     }
                 }
                 if(hasAllPieces && allPeersHaveWholeFile) {
-                    System.out.println(Arrays.toString(peerConnection.sendResponses.peek()));
                     if(peerConnection.sendResponses.isEmpty()) {
-                        break;
+                        //System.err.println("Host " + peerConnection.hostProcess.selfPeerId + " has all pieces and detected that all peers have all pieces");
+                        peerConnection.hostProcess.close();
+                        continue; //I think continue and break here would have the same effect since the loop checks for the socket being closed at the beginning
+                        // continue worked here first try so I'm not going to change it
                     }
                     try {
                         sendMessage(peerConnection.sendResponses.remove());
                     } catch (IOException e) {
                         throw new RuntimeException(e);
-                    }
-                    if(peerConnection.sendResponses.isEmpty()) {
-                        break;
                     }
                     // System.out.println("Both peers have all pieces, closing connection");
                     //peerConnection.close();
