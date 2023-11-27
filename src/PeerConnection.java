@@ -166,6 +166,23 @@ public class PeerConnection extends Thread{
         System.err.println("Exiting client.");
     }
 
+    public boolean peerHasAnyPiecesWeDont() {
+        boolean peerHasAnyPiecesWeDont = false;
+        for (int i = 0; i < commonCfg.numPieces; i++) {
+            if ((hostProcess.pieceMap.get(i) == null || hostProcess.pieceMap.get(i) == peerProcess.pieceStatus.EMPTY) && peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
+                peerHasAnyPiecesWeDont = true;
+                break;
+            }
+        }
+        return peerHasAnyPiecesWeDont;
+    }
+
+    public boolean isPieceIndexEligible(int index) {
+        boolean peerHasPiece = peerPieceMap.get(index) == peerProcess.pieceStatus.DOWNLOADED;
+        boolean weDontHavePiece = hostProcess.pieceMap.get(index) == null || hostProcess.pieceMap.get(index) == peerProcess.pieceStatus.EMPTY;
+        return peerHasPiece && weDontHavePiece;
+    }
+
 
     // Prepares the peer to be closed for the program to terminate
     public void close() {
