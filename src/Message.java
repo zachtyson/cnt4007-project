@@ -24,6 +24,20 @@ enum MsgType {
 
 public class Message {
 
+    public static final boolean DEBUG = false;
+
+    static void printError(String message) {
+        //Duplicate code from peerProcess, but I wanted to keep Message.java as self-contained as possible
+        System.err.println("Error: " + message);
+        //System.exit(1);
+    }
+
+    static void printDebug(String message) {
+        if(DEBUG) {
+            System.out.println("Debug: " + message);
+        }
+    }
+
     private Message() {
         //private constructor}
     }
@@ -104,7 +118,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 headerAndMessageType[4] = 7;
                 break;
             default:
-                System.out.println("Invalid message type");
+                printError("Invalid message type");
                 System.exit(0);
         }
         return headerAndMessageType;
@@ -156,8 +170,8 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
             }
         }
         int peerID = buffer.getInt();
-        System.out.println("Given Peer ID: " + peerID);
-        System.out.println("Expected Peer ID: " + expectedPeerID);
+        printDebug("Given Peer ID: " + peerID);
+        printDebug("Expected Peer ID: " + expectedPeerID);
         return peerID == expectedPeerID;
     }
 
@@ -191,7 +205,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         byte[] temp = new byte[4];
         System.arraycopy(payload, 0, temp, 0, 4);
         Interpretation interpretation = new Interpretation();
-        //System.out.println("Payload: " + Arrays.toString(payload));
+        printDebug("Payload: " + Arrays.toString(payload));
         int payloadLengthTemp = ByteBuffer.wrap(temp).getInt();
         long payloadLengthTempLong = payloadLengthTemp & 0xffffffffL; //converts to unsigned int
         int payloadLength = (int) payloadLengthTempLong; //converts back to int
@@ -202,7 +216,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 
 
         byte messageType = payload[4];
-        //System.err.println("Message Type: " + messageType);
+        printDebug("Message Type: " + messageType);
         switch (messageType){
             case 0 : //choke
                 if(payloadLength != 1){
@@ -237,9 +251,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 4 : //have
-                System.err.println("Have message");
+                printDebug("Have message");
                 interpretation.Msg = MsgType.have;
-                System.err.println(Arrays.toString(payload));
+                printDebug(Arrays.toString(payload));
                 //index is the 4 bytes after the message type
                 int haveIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
                 long haveIndexLong = haveIndex & 0xffffffffL; //converts to unsigned int
@@ -265,12 +279,12 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 System.arraycopy(payload, 9, interpretation.messagePayload, 0, payloadLength - 4);
                 break;
             default:
-                System.out.println("Invalid message type");
+                printError("Invalid message type");
                 msgMisinterpreter(payload);
                 break;
         }
         //First 5 bytes are the length (4) and the type (1) so the payload is the rest
-        //System.out.println("Payload Length: " + payloadLength);
+        printDebug("Payload Length: " + payloadLength);
         byte[] messagePayload = new byte[payloadLength];
         System.arraycopy(payload, 5, messagePayload, 0, payloadLength);
         interpretation.messagePayload = messagePayload;
@@ -279,34 +293,34 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     public static byte[] generateHasPieceMessage(int pieceIndex) {
-        //System.out.println("Generating have message for piece " + pieceIndex);
+        printDebug("Generating have message for piece " + pieceIndex);
         // 4-byte message length field, 1-byte message type field, and 4 bytes for piece index
         int messageLength = 4;
         byte[] haveMessage = new byte[messageLength + 5];
         byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.have);
         System.arraycopy(headerAndMessageType, 0, haveMessage, 0, 5);
 
-        //System.err.println(pieceIndex);
+        printDebug("Generate piece message: " + pieceIndex);
         // message payload
         byte[] pieceIndexBytes = ByteBuffer.allocate(4).putInt(pieceIndex).array();
         System.arraycopy(pieceIndexBytes, 0, haveMessage, 5, 4);
-        // System.err.println(Arrays.toString(haveMessage));
+        printDebug("Generate piece message: " + Arrays.toString(haveMessage));
 
         return haveMessage;
     }
 
     private static void msgMisinterpreter(byte[] payload){
-        System.out.println("Bad Message");
+        printError("Bad Message");
         //Print each byte
         for(byte b : payload){
-            System.out.println(b);
+            printError("Byte: " + b);
         }
         System.exit(0);
     }
 
     public static byte[] generatePieceMessage(byte[] payload,int index) {
         if(payload == null){
-            System.out.println("Payload is null at index " + index);
+            printError("Payload is null at index " + index);
             System.exit(0);
         }
         // 4-byte message length field, 1 byte message type field, 4 bytes for piece index, and a message payload with variable size.
@@ -319,7 +333,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
         System.arraycopy(pieceIndex, 0, pieceMessage, 5, 4);
         System.arraycopy(payload, 0, pieceMessage, 9, payload.length);
-        //System.out.println("Piece message length: " + pieceMessage.length);
+        printDebug("Piece message length: " + pieceMessage.length);
         return pieceMessage;
     }
 
