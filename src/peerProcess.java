@@ -121,9 +121,17 @@ public class peerProcess {
         for(PeerConnection peerConnection : this.peerConnectionVector) {
             if(peerConnection.client) {
                 peerConnection.start();
+                //peerConnection.join();
+            }
+        }
+        //todo come back here and see if this fixed the concurrency issue
+        for(PeerConnection peerConnection : this.peerConnectionVector) {
+            if(peerConnection.client) {
+                //peerConnection.start();
                 peerConnection.join();
             }
         }
+        System.out.println("All peers connected");
     }
 
     public static class ServerSocketThread extends Thread {
@@ -186,7 +194,6 @@ public class peerProcess {
                             peerConnection.start();
                             peerConnection.in = new DataInputStream(socket.getInputStream());
                             peerConnection.out = new DataOutputStream(socket.getOutputStream());
-                            peerConnection.join();
                             serverWait.remove(peerConnection);
                             break;
                         }
@@ -202,9 +209,10 @@ public class peerProcess {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             }
+//           catch (InterruptedException e) {
+//                throw new RuntimeException(e);
+//            }
         }
     }
 
