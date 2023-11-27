@@ -10,20 +10,20 @@ public class SendHandler extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Starting send handler for peer");
+        peerProcess.printDebug("Starting send handler for peer");
         boolean hasAnyPiecesAtStart = checkForPieces();
         if (hasAnyPiecesAtStart) {
             // If it has any pieces, send bitfield message
             int numBytes = (int) Math.ceil(peerConnection.commonCfg.numPieces / 8.0);
-            System.out.println("Num bytes: " + numBytes);
+            peerProcess.printDebug("Num bytes: " + numBytes);
             //byte[] headerAndType = Message.generateHeaderAndMessageType(numBytes,MsgType.bitfield);
             byte[] bitfieldMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
 
             try {
                 //Print full message
-                System.out.println("Message: " + Arrays.toString(bitfieldMessage));
+                peerProcess.printDebug("Message: " + Arrays.toString(bitfieldMessage));
                 sendMessage(bitfieldMessage);
-                System.out.println("Sent bitfield to peer");
+                peerProcess.printDebug("Sent bitfield to peer");
             } catch (IOException e) {
                 //e.printStackTrace();
             }
@@ -70,10 +70,10 @@ public class SendHandler extends Thread {
                     int randomIndex = new Random().nextInt(eligiblePieces.size());
                     int selectedPieceIndex = eligiblePieces.get(randomIndex);
                     peerConnection.currentlyRequestedPiece.set(selectedPieceIndex);
-                    System.out.println("Randomly added piece " + selectedPieceIndex + " to requested pieces");
+                    peerProcess.printDebug("Randomly added piece " + selectedPieceIndex + " to requested pieces");
                 }
                 else {
-                    System.out.println("No eligible pieces to request");
+                    peerProcess.printDebug("No eligible pieces to request");
                     //This should in theory never happen, but if it does, it means that the peer has all the pieces that this peer has
                     //and this peer has all the pieces that the peer has, but logically this can't happen
                 }
@@ -86,14 +86,14 @@ public class SendHandler extends Thread {
                         break;
                     }
                     sendMessage(pieceIndex);
-                    System.out.println("Sent message to peer (have)");
+                    peerProcess.printDebug("Sent message to peer (have)");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
             else if (hasOutstandingRequest) {
                 // Send out the outstanding request
-                System.out.println("Sending request message");
+                peerProcess.printDebug("Sending request message");
                 int pieceIndex = peerConnection.currentlyRequestedPiece.get();
                 byte[] message = Message.generateRequestMessage(pieceIndex);
                 try {
@@ -104,9 +104,9 @@ public class SendHandler extends Thread {
                     }
                     sendMessage(message);
                     peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.REQUESTING);
-                    System.out.println("Sent message to peer");
+                    peerProcess.printDebug("Sent message to peer (request)");
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    peerProcess.printError("Error sending request message to peer: " + e.getMessage());
                 }
                 peerConnection.currentlyRequestedPiece.set(-1);
             }
