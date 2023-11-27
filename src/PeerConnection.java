@@ -21,7 +21,6 @@ public class PeerConnection extends Thread{
     SendHandler sendHandler;
     ReceiveHandler receiveHandler;
     peerProcess hostProcess;
-    Queue<Integer> requestedPieces = new ConcurrentLinkedQueue<>();
     Queue<byte[]> sendResponses = new ConcurrentLinkedQueue<>();
     AtomicBoolean peerHasAllPieces = new AtomicBoolean(false);
     AtomicInteger currentlyRequestedPiece = new AtomicInteger(-1); // For sake of simplicity a peer can only request one piece at a time from another peer
