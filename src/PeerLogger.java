@@ -140,6 +140,11 @@ public class PeerLogger {
         logger.info("Peer " + peerID + " has downloaded the complete file.");
     }
 
+    public synchronized void logShutdown() {
+        //Simple message that logs when all peers have the file and the program is shutting down
+        logger.info("All peers have the complete file. Shutting down.");
+    }
+
     public synchronized void logPeerCompletion(String peerID) {
         //Whenever a peer downloads the complete file, it generates the following log:
         //[Time]: Peer [peer_ID] has downloaded the complete file.

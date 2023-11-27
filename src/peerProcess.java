@@ -77,6 +77,7 @@ public class peerProcess {
         try {
             startListening();
             startConnection();
+            System.err.println("All peers connected");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -87,7 +88,7 @@ public class peerProcess {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        logger.logCompletion();
+        logger.logShutdown();
         //Iterate over entire map to check if all pieces
         //If all pieces, try to save file
 
@@ -131,7 +132,6 @@ public class peerProcess {
                 peerConnection.join();
             }
         }
-        System.out.println("All peers connected");
     }
 
     public static class ServerSocketThread extends Thread {
