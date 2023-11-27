@@ -13,7 +13,7 @@ public class ReceiveHandler extends Thread{
     }
     @Override
     public void run() {
-        while (true) {
+        while (!peerConnection.socket.isClosed()) {
             //check if socket is closed
 
             boolean allPeersHaveWholeFile = true;
