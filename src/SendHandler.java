@@ -41,6 +41,8 @@ public class SendHandler extends Thread {
 //            System.out.println("No requested pieces: " + noRequestedPieces);
 //            System.out.println("Has all pieces: " + hasAllPieces);
 //            System.out.println("Peer has all pieces: " + peerHasAllPieces);
+            //todo for future zach: currently this only sends if the peer has all pieces
+            //todo but it should also check to see if the peer has ANY pieces that this peer doesn't have
             if (noRequestedPieces && !hasAllPieces && peerHasAllPieces) {
                 //If all pieces have been downloaded, respond to queue of requests
                 //If no requests, I guess just busy wait?
