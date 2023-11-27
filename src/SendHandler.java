@@ -7,11 +7,12 @@ public class SendHandler extends Thread {
     SendHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
     }
+
     @Override
     public void run() {
         System.out.println("Starting send handler for peer");
-        boolean hasAnyPieces = checkForPieces();
-        if (hasAnyPieces) {
+        boolean hasAnyPiecesAtStart = checkForPieces();
+        if (hasAnyPiecesAtStart) {
             // If it has any pieces, send bitfield message
             int numBytes = (int) Math.ceil(peerConnection.commonCfg.numPieces / 8.0);
             System.out.println("Num bytes: " + numBytes);
@@ -35,34 +36,31 @@ public class SendHandler extends Thread {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            boolean noRequestedPieces = peerConnection.requestedPieces.isEmpty();
+            // First priority should be to send a request message if there is a piece that is not currently being requested
+            // Each peerConnection should be able to have 1 outstanding request at a time, meaning that the entire peerProcess
+            // should be able to have 1 outstanding request per peerConnection, aka 1 outstanding request per peer
+            // Second priority should be to respond to any queued responses (have message, etc.)
+            // Third priority should be to send any requested pieces
+            // This can be subject to change, but this is the current plan
+            boolean hasOutstandingRequest = peerConnection.currentlyRequestedPiece.get() != -1;
+            boolean hasQueuedResponses = !peerConnection.sendResponses.isEmpty();
             boolean hasAllPieces = peerConnection.hostProcess.hasAllPieces.get();
             boolean peerHasAllPieces = peerConnection.peerHasAllPieces.get();
-            boolean peerHasAnyPiecesWeDont = false;
-            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                if (peerConnection.hostProcess.pieceMap.get(i) == null && peerConnection.peerPieceMap.get(i) != null) {
-                    peerHasAnyPiecesWeDont = true;
-                    break;
-                }
-            }
-//            System.out.println("No requested pieces: " + noRequestedPieces);
-//            System.out.println("Has all pieces: " + hasAllPieces);
-//            System.out.println("Peer has all pieces: " + peerHasAllPieces);
-            //todo for future zach: currently this only sends if the peer has all pieces
-            //todo but it should also check to see if the peer has ANY pieces that this peer doesn't have
-            if (noRequestedPieces && !hasAllPieces && (peerHasAllPieces || peerHasAnyPiecesWeDont)) {
-                //If all pieces have been downloaded, respond to queue of requests
-                //If no requests, I guess just busy wait?
-                //Queue requests to send
+            boolean peerHasAnyPiecesWeDont = peerConnection.peerHasAnyPiecesWeDont();
+
+            //Check for conditions to send outstanding request
+            if(!hasOutstandingRequest && peerHasAnyPiecesWeDont) {
+                //This branch means that if there are any pieces that the peer has that this peer doesn't have, request one of them
+                //This branch should only be taken if there is not already an outstanding request
                 List<Integer> eligiblePieces = new ArrayList<>();
+                //List is used to randomly request a piece rather than just doing it in order
                 for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
                     // Check if the piece is neither downloaded nor currently being requested by this peer,
                     // and make sure that sendResponses is empty
-                    if ((peerConnection.hostProcess.pieceMap.get(i) == null ||
-                            (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED &&
-                                    peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.REQUESTING))
-                            && !peerConnection.requestedPieces.contains(i) && peerConnection.sendResponses.isEmpty()) {
-
+//                    if ((peerConnection.hostProcess.pieceMap.get(i) == null || (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED &&
+//                                    peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.REQUESTING))
+//                            && peerConnection.sendResponses.isEmpty()) {
+                    if (peerConnection.isPieceIndexEligible(i)) {
                         eligiblePieces.add(i); // Add eligible piece index to the list
                     }
                 }
@@ -71,12 +69,46 @@ public class SendHandler extends Thread {
                     // Randomly select a piece from the eligible pieces
                     int randomIndex = new Random().nextInt(eligiblePieces.size());
                     int selectedPieceIndex = eligiblePieces.get(randomIndex);
-                    if(peerConnection.hostProcess.pieceMap.get(selectedPieceIndex) == null && peerConnection.hostProcess.pieceMap.get(selectedPieceIndex) != peerProcess.pieceStatus.REQUESTING) {
-                        peerConnection.hostProcess.pieceMap.put(selectedPieceIndex, peerProcess.pieceStatus.REQUESTING);
-                        peerConnection.requestedPieces.add(selectedPieceIndex);
-                    }
+                    peerConnection.currentlyRequestedPiece.set(selectedPieceIndex);
                     System.out.println("Randomly added piece " + selectedPieceIndex + " to requested pieces");
                 }
+                else {
+                    System.out.println("No eligible pieces to request");
+                    //This should in theory never happen, but if it does, it means that the peer has all the pieces that this peer has
+                    //and this peer has all the pieces that the peer has, but logically this can't happen
+                }
+            }
+            else if (hasQueuedResponses) {
+                // Send out a queued response that ReceivedHandler has queued, this can be a have message, a piece message, or whatever
+                byte[] pieceIndex = peerConnection.sendResponses.remove();
+                try {
+                    if(peerConnection.socket.isClosed()) {
+                        break;
+                    }
+                    sendMessage(pieceIndex);
+                    System.out.println("Sent message to peer (have)");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            else if (hasOutstandingRequest) {
+                // Send out the outstanding request
+                System.out.println("Sending request message");
+                int pieceIndex = peerConnection.currentlyRequestedPiece.get();
+                byte[] message = Message.generateRequestMessage(pieceIndex);
+                try {
+                    //Checks to see if a piece is already requested from this peer
+                    //Check if socket is closed
+                    if(peerConnection.socket.isClosed()) {
+                        break;
+                    }
+                    sendMessage(message);
+                    peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.REQUESTING);
+                    System.out.println("Sent message to peer");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                peerConnection.currentlyRequestedPiece.set(-1);
             }
             else if (hasAllPieces && peerHasAllPieces){
                 //if both peers have all pieces, check to see if all peers have all pieces
@@ -92,7 +124,7 @@ public class SendHandler extends Thread {
                     if (peerConnection.sendResponses.isEmpty()) {
                         //System.err.println("Host " + peerConnection.hostProcess.selfPeerId + " has all pieces and detected that all peers have all pieces");
                         peerConnection.hostProcess.close();
-                        continue; //I think continue and break here would have the same effect since the loop checks for the socket being closed at the beginning
+                        break; //I think continue and break here would have the same effect since the loop checks for the socket being closed at the beginning
                         // continue worked here first try so I'm not going to change it
                     }
                     try {
@@ -104,32 +136,6 @@ public class SendHandler extends Thread {
                     //peerConnection.close();
                 }
             }
-            //Prioritize sending have messages over sending requests and pieces
-            if (!peerConnection.sendResponses.isEmpty()) {
-                //Send piece message
-                byte[] pieceIndex = peerConnection.sendResponses.remove();
-                try {
-                    sendMessage(pieceIndex);
-                    System.out.println("Sent message to peer (have)");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } else if (!peerConnection.requestedPieces.isEmpty()) {
-                //Send piece message
-                if (peerConnection.currentlyRequestedPiece.get() == -1) {
-                    int pieceIndex = peerConnection.requestedPieces.remove();
-                    byte[] message = Message.generateRequestMessage(pieceIndex);
-                    try {
-                        //Checks to see if a piece is already requested from this peer
-                        sendMessage(message);
-                        peerConnection.currentlyRequestedPiece.set(pieceIndex);
-                        System.out.println("Sent message to peer");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            // Add logic to check for other types of messages to send
         }
     }
 
