@@ -36,7 +36,7 @@ public class peerProcess {
     public static void main(String[] args) {
         // Check for first argument
         if (args.length < 1) {
-            System.out.println("Error: Missing peer ID argument");
+            printError("Missing peer ID argument");
             System.exit(1);
         }
         // Attempt to parse peer ID
@@ -44,11 +44,11 @@ public class peerProcess {
         try {
             ID = Integer.parseInt(args[0]);
             if(ID < 0) {
-                System.out.println("Error: Peer ID must be a positive integer");
+                printError("Peer ID must be a positive integer");
                 System.exit(1);
             }
         } catch (NumberFormatException e) {
-            System.out.println("Error: Peer ID must be an integer");
+            printError("Peer ID must be an integer");
             System.exit(1);
         }
         // Create a new peerProcess object
@@ -65,23 +65,23 @@ public class peerProcess {
             getCommon();
             this.peerConnectionVector = getPeers(currentPeerID);
         } catch (IOException e) {
-            System.out.println("Error: PeerInfo.cfg not found");
+            printError("PeerInfo.cfg not found");
         }
         try {
             logger = new PeerLogger(currentPeerID);
         } catch (IOException e) {
-            System.err.println("Error: Could not create logger");
+            printError("Could not create logger");
             System.exit(1);
         }
         // Start listening for connections to ServerSocket
         try {
             startListening();
             startConnection();
-            System.err.println("All peers connected");
+            printDebug("All peers connected");
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.err.println("All peers terminated");
+        printDebug("All peers terminated");
         String fileName = commonCfg.fileName;
         try {
             byteMapToFile(pieceData, fileName);
@@ -158,7 +158,7 @@ public class peerProcess {
 //                System.err.println(peerConnection.peerId);
 //            }
             if(serverWait.isEmpty()) {
-                System.out.println("No peers to wait for");
+                printDebug("No peers to wait for");
                 //terminate thread
                 return;
             }
@@ -166,10 +166,10 @@ public class peerProcess {
                 while(true) {
                     //Waits for a connection to the ServerSocket
                     //Currently this waits forever but I'm thinking adding a timeout clause might be a good idea
-                    System.out.println("Waiting for client on port " + serverSocket.getLocalPort() + "...");
+                    printDebug("Waiting for client on port " + serverSocket.getLocalPort() + "...");
                     Socket socket = serverSocket.accept();
                     //After a connection is made, a handshake is performed
-                    System.out.println("Connected to " + socket.getRemoteSocketAddress());
+                    printDebug("Connected to " + socket.getRemoteSocketAddress());
                     int peerId = PeerConnection.peerHandshakeServerSocket(socket, this.hostProcess.selfPeerId);
                     boolean found = false;
                     for(PeerConnection peerConnection : serverWait) {
@@ -181,13 +181,13 @@ public class peerProcess {
                         //The handshake includes the peer's id, which is then checked amongst the list of peers in serverWait
                     }
                     if(!found) {
-                        System.err.println("Error: Peer ID " + peerId);
+                        printError("Peer ID " + peerId + " not found");
                         for (PeerConnection peerConnection : serverWait) {
-                            System.err.println(peerConnection.peerId);
+                            printError("Peer ID " + peerConnection.peerId + " not found");
                         }
                         System.exit(1);
                     }
-                    System.err.println("Handshake successful");
+                    printDebug("Handshake successful");
                     //if peerId is not found, then we have a problem
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
@@ -204,7 +204,7 @@ public class peerProcess {
                         return;
                     }
                     else {
-                        System.out.println("Waiting for " + serverWait.size() + " more peers");
+                        printDebug("Waiting for " + serverWait.size() + " more peers");
                     }
                 }
             } catch (IOException e) {
@@ -281,7 +281,7 @@ public class peerProcess {
                             // Look for presence of file
                             File file = new File(commonCfg.fileName);
                             if(!file.exists()) {
-                                System.out.println("Error: File " + commonCfg.fileName + " not found");
+                                printError("File " + commonCfg.fileName + " not found");
                                 System.exit(1);
                                 //Likely something went wrong on our part since PeerInfo.cfg says that the peer has the file but it doesn't
                             }
@@ -292,7 +292,7 @@ public class peerProcess {
                                 int fileSize = commonCfg.fileSize;
                                 int actualFileSize = fileContent.length;
                                 if (fileSize != actualFileSize) {
-                                    System.err.println("Error: File size does not match expected file size");
+                                    printError("File size does not match expected file size");
                                     System.exit(1);
                                 }
                                 int pieceSize = commonCfg.pieceSize;
@@ -310,13 +310,13 @@ public class peerProcess {
                                 }
                                 for(int i = 0; i < commonCfg.numPieces; i++) {
                                     if(pieceData.get(i) == null) {
-                                        System.err.println("Error: Piece " + i + " is null");
+                                        printError("Error: Piece " + i + " is null");
                                         System.exit(1);
                                     }
                                 }
-                                System.err.println("File read successfully and split into pieces");
+                                printDebug("File read successfully and split into pieces");
                             } catch (Exception e) {
-                                e.printStackTrace();
+                                printError("Error reading file");
                             }
 
                         } else {
@@ -331,13 +331,13 @@ public class peerProcess {
                     }
                     //Code above tries to connect to any peers before it, and any peers after it will connect to it
                 } catch (NumberFormatException e) {
-                    System.out.println("Error: Peer ID must be an integer");
+                    printError("Peer ID must be an integer");
                     System.exit(1);
                 }
             }
             in.close();
         } catch (Exception ex) {
-            System.out.println(ex.toString());
+            printError(ex.getMessage());
         }
         return peerConnectionVector;
     }
@@ -357,8 +357,6 @@ public class peerProcess {
                 // Split line by whitespace
                 String[] tokens = currLine.split("\\s+",2);
                 if(tokens.length != 2) {
-                    // System.out.println("Error: Common.cfg must have 2 fields per line");
-                    // System.exit(1);
                     // Not sure if to exit or just continue, but there is an invalid line in the file
                     continue;
                 }
@@ -384,17 +382,18 @@ public class peerProcess {
                         pieceSize = Integer.parseInt(value);
                         break;
                     default:
-                        System.out.println("Unknown key in config file: " + key);
+                        printError("Unknown key in config file: " + key);
                         System.exit(1);
                 }
             }
             commonCfg = new CommonCfg(numberOfPreferredNeighbors, unchokingInterval, optimisticUnchokingInterval, fileName, fileSize, pieceSize);
             in.close();
         } catch (NumberFormatException e) {
-            System.out.println("Error: Value must be an integer");
+            printError("Invalid number format in config file");
             System.exit(1);
         } catch (Exception ex) {
-            System.out.println(ex.toString());
+            printError(ex.getMessage());
+            System.exit(1);
         }
     }
 
