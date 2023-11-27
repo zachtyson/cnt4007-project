@@ -38,12 +38,19 @@ public class SendHandler extends Thread {
             boolean noRequestedPieces = peerConnection.requestedPieces.isEmpty();
             boolean hasAllPieces = peerConnection.hostProcess.hasAllPieces.get();
             boolean peerHasAllPieces = peerConnection.peerHasAllPieces.get();
+            boolean peerHasAnyPiecesWeDont = false;
+            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                if (peerConnection.hostProcess.pieceMap.get(i) == null && peerConnection.peerPieceMap.get(i) != null) {
+                    peerHasAnyPiecesWeDont = true;
+                    break;
+                }
+            }
 //            System.out.println("No requested pieces: " + noRequestedPieces);
 //            System.out.println("Has all pieces: " + hasAllPieces);
 //            System.out.println("Peer has all pieces: " + peerHasAllPieces);
             //todo for future zach: currently this only sends if the peer has all pieces
             //todo but it should also check to see if the peer has ANY pieces that this peer doesn't have
-            if (noRequestedPieces && !hasAllPieces && peerHasAllPieces) {
+            if (noRequestedPieces && !hasAllPieces && (peerHasAllPieces || peerHasAnyPiecesWeDont)) {
                 //If all pieces have been downloaded, respond to queue of requests
                 //If no requests, I guess just busy wait?
                 //Queue requests to send
@@ -64,12 +71,16 @@ public class SendHandler extends Thread {
                     // Randomly select a piece from the eligible pieces
                     int randomIndex = new Random().nextInt(eligiblePieces.size());
                     int selectedPieceIndex = eligiblePieces.get(randomIndex);
-
-                    peerConnection.requestedPieces.add(selectedPieceIndex);
-                    peerConnection.hostProcess.pieceMap.put(selectedPieceIndex, peerProcess.pieceStatus.REQUESTING);
+                    if(peerConnection.hostProcess.pieceMap.get(selectedPieceIndex) == null && peerConnection.hostProcess.pieceMap.get(selectedPieceIndex) != peerProcess.pieceStatus.REQUESTING) {
+                        peerConnection.hostProcess.pieceMap.put(selectedPieceIndex, peerProcess.pieceStatus.REQUESTING);
+                        peerConnection.requestedPieces.add(selectedPieceIndex);
+                    }
                     System.out.println("Randomly added piece " + selectedPieceIndex + " to requested pieces");
                 }
-            } else {
+            }
+            else if (hasAllPieces && peerHasAllPieces){
+                //if both peers have all pieces, check to see if all peers have all pieces
+                // and if so, close the connection
                 boolean allPeersHaveWholeFile = true;
                 for (Map.Entry<Integer, Boolean> entry : peerConnection.hostProcess.peerHasWholeFile.entrySet()) {
                     if (!entry.getValue()) {
@@ -77,7 +88,7 @@ public class SendHandler extends Thread {
                         break;
                     }
                 }
-                if (hasAllPieces && allPeersHaveWholeFile) {
+                if (allPeersHaveWholeFile) {
                     if (peerConnection.sendResponses.isEmpty()) {
                         //System.err.println("Host " + peerConnection.hostProcess.selfPeerId + " has all pieces and detected that all peers have all pieces");
                         peerConnection.hostProcess.close();
