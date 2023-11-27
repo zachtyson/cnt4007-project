@@ -1,7 +1,6 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 
 public class SendHandler extends Thread {
     PeerConnection peerConnection;
@@ -46,22 +45,27 @@ public class SendHandler extends Thread {
                 //If all pieces have been downloaded, respond to queue of requests
                 //If no requests, I guess just busy wait?
                 //Queue requests to send
-                //todo: only add one request at a time
+                List<Integer> eligiblePieces = new ArrayList<>();
                 for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
                     // Check if the piece is neither downloaded nor currently being requested by this peer,
-                    // along with that, make sure that sendResponses is empty, requests one piece at a time
-                    // this is so that each peer has a chance to request a piece from any other peer
-                    // so basically this is picks a random piece to request
+                    // and make sure that sendResponses is empty
                     if ((peerConnection.hostProcess.pieceMap.get(i) == null ||
                             (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED &&
                                     peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.REQUESTING))
                             && !peerConnection.requestedPieces.contains(i) && peerConnection.sendResponses.isEmpty()) {
 
-                        peerConnection.requestedPieces.add(i);
-                        peerConnection.hostProcess.pieceMap.put(i, peerProcess.pieceStatus.REQUESTING);
-                        System.out.println("Added piece " + i + " to requested pieces");
-                        break;
+                        eligiblePieces.add(i); // Add eligible piece index to the list
                     }
+                }
+
+                if (!eligiblePieces.isEmpty()) {
+                    // Randomly select a piece from the eligible pieces
+                    int randomIndex = new Random().nextInt(eligiblePieces.size());
+                    int selectedPieceIndex = eligiblePieces.get(randomIndex);
+
+                    peerConnection.requestedPieces.add(selectedPieceIndex);
+                    peerConnection.hostProcess.pieceMap.put(selectedPieceIndex, peerProcess.pieceStatus.REQUESTING);
+                    System.out.println("Randomly added piece " + selectedPieceIndex + " to requested pieces");
                 }
             } else {
                 boolean allPeersHaveWholeFile = true;
