@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-
 public class peerProcess {
     // From my understanding the first argument is the peerID, which we can see
     // in PeerInfo.cfg as well as page 7 of the project description pdf
@@ -32,6 +30,8 @@ public class peerProcess {
     // PieceSize [int] - Specifies the size of a piece in bytes
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
+
+    static final boolean DEBUG = false;
 
     public static void main(String[] args) {
         // Check for first argument
@@ -414,6 +414,17 @@ public class peerProcess {
             this.fileSize = fileSize;
             this.pieceSize = pieceSize;
             this.numPieces = (int) Math.ceil((double) fileSize / pieceSize);
+        }
+    }
+
+    static void printError(String message) {
+        System.err.println("Error: " + message);
+        //System.exit(1);
+    }
+
+    static void printDebug(String message) {
+        if(DEBUG) {
+            System.out.println("Debug: " + message);
         }
     }
 

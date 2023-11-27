@@ -49,10 +49,10 @@ public class PeerConnection extends Thread {
 
     @Override
     public void run() {
-        printDebug("Starting connection to peer " + peerId);
+        peerProcess.printDebug("Starting connection to peer " + peerId);
         if(client == null) {
             //This should never happen
-            printError("Client is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+            peerProcess.printError("Client is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
         } else if (client) {
             client();
             hostProcess.logger.logTCPConnection(String.valueOf(peerId),false);
@@ -76,13 +76,13 @@ public class PeerConnection extends Thread {
 
     public void startHandlers() {
         if(socket == null) {
-            printError("Socket is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+            peerProcess.printError("Socket is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
         }
         if(in == null) {
-            printError("in is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+            peerProcess.printError("in is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
         }
         if(out == null) {
-            printError("out is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
+            peerProcess.printError("out is null, verify that the peer is in the correct order in PeerInfo.cfg and that currentPeer is set correctly");
         }
         sendHandler = new SendHandler(this);
         receiveHandler = new ReceiveHandler(this);
@@ -94,7 +94,7 @@ public class PeerConnection extends Thread {
             sendHandler.join();
             receiveHandler.join();
         } catch (InterruptedException e) {
-            printError("Thread interrupted" + e.getMessage());
+            peerProcess.printError("Thread interrupted" + e.getMessage());
             if(sendHandler.isAlive()) {
                 sendHandler.interrupt();
             }
@@ -133,11 +133,11 @@ public class PeerConnection extends Thread {
                 //create a socket to connect to the server
                 String address = this.peerAddress;
                 int port = this.peerPort;
-                printDebug("Attempting to connect to " + address + " in port " + port);
+                peerProcess.printDebug("Attempting to connect to " + address + " in port " + port);
                 socket = new Socket(address, port);
                 in = new DataInputStream(socket.getInputStream());
                 out = new DataOutputStream(socket.getOutputStream());
-                printDebug("Connected to " + address + " in port " + port);
+                peerProcess.printDebug("Connected to " + address + " in port " + port);
                 //initialize inputStream and outputStream
                 if(!peerHandshake(socket,this.hostProcess.selfPeerId,this.peerId)) {
                     System.exit(1);
@@ -146,15 +146,15 @@ public class PeerConnection extends Thread {
                 break;
             }
             catch (ConnectException e) {
-                printError("Connection refused. You need to initiate a server first. " + this.peerAddress+" "+this.peerPort+" "+this.peerId);
+                peerProcess.printError("Connection refused. You need to initiate a server first. " + this.peerAddress+" "+this.peerPort+" "+this.peerId);
                 try {
-                    printError("Retry in " + (timeBetweenRetries / 1000) + " seconds... (" + (attempt + 1) + "/" + numberOfRetries + ")");
+                    peerProcess.printError("Retry in " + (timeBetweenRetries / 1000) + " seconds... (" + (attempt + 1) + "/" + numberOfRetries + ")");
                     Thread.sleep(timeBetweenRetries);  // wait for a while before trying to reconnect
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                 }
             } catch(UnknownHostException unknownHost){
-                printError("You are trying to connect to an unknown host! " + unknownHost.getMessage());
+                peerProcess.printError("You are trying to connect to an unknown host! " + unknownHost.getMessage());
 
             }
             catch(IOException ioException){
@@ -162,10 +162,10 @@ public class PeerConnection extends Thread {
             }
         }
         if(attempt == numberOfRetries) {
-            printError("Maximum number of retries reached. Terminating...");
+            peerProcess.printError("Maximum number of retries reached. Terminating...");
             System.exit(1);
         }
-        printDebug("Exiting client.");
+        peerProcess.printDebug("Exiting client.");
     }
 
     public boolean peerHasAnyPiecesWeDont() {
@@ -189,13 +189,13 @@ public class PeerConnection extends Thread {
     // Prepares the peer to be closed for the program to terminate
     public void close() {
         //Close the socket
-        printDebug("Closing connection to peer " + peerId);
+        peerProcess.printDebug("Closing connection to peer " + peerId);
         try {
             if (out != null) out.close();
             if (in != null) in.close();
             if (socket != null) socket.close();
         } catch (IOException e) {
-            printError("Error closing resources for peer " + peerId + ": " + e.getMessage());
+            peerProcess.printError("Error closing resources for peer " + peerId + ": " + e.getMessage());
         }
     }
 
@@ -213,9 +213,10 @@ public class PeerConnection extends Thread {
         //handshake is always 32 bytes
 
         if (!Message.checkHandshake(handshakeMessage, expectedIdToReceive)) {
-            printError("Handshake failed");
+            peerProcess.printError("Handshake failed");
             return false;
         }
+        peerProcess.printDebug("Handshake successful");
         return true;
     }
 
@@ -254,14 +255,5 @@ public class PeerConnection extends Thread {
         return message;
     }
 
-    static void printError(String message) {
-        System.err.println("Error: " + message);
-        //System.exit(1);
-    }
 
-    public void printDebug(String message) {
-        if(debug) {
-            System.out.println("Debug: " + message);
-        }
-    }
 }
