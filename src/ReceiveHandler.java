@@ -73,11 +73,14 @@ public class ReceiveHandler extends Thread{
                                 break;
                             }
                         }
-                        peerConnection.peerHasAllPieces.set(hasAllPiecesAfterHave);
                         if(hasAllPiecesAfterHave) {
                             //System.out.println("Peer has all pieces");
+                            boolean previousValue = peerConnection.peerHasAllPieces.getAndSet(true);
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
-                            peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+                            if(!previousValue) {
+                                peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+                                //Checking to prevent duplicate log messages
+                            }
                         }
                         break;
                     case request:
@@ -111,10 +114,11 @@ public class ReceiveHandler extends Thread{
                                 break;
                             }
                         }
-                        peerConnection.hostProcess.hasAllPieces.set(hasAllPiecesAfterReceieve);
                         if(hasAllPiecesAfterReceieve) {
-                            System.out.println("Host has all pieces");
-                            peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
+                            boolean previousValue = peerConnection.hostProcess.hasAllPieces.getAndSet(true);
+                            if(!previousValue) {
+                                peerConnection.hostProcess.logger.logCompletion();
+                            }
                         }
                         int numPiecesLeft = 0;
                         for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
