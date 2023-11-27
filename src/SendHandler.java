@@ -29,11 +29,8 @@ public class SendHandler extends Thread {
             }
         }
 
-        while (true) {
+        while (!peerConnection.socket.isClosed()) {
             //check to see if peerConnection.socket is closed
-            if(peerConnection.socket.isClosed()) {
-                break;
-            }
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
@@ -45,12 +42,12 @@ public class SendHandler extends Thread {
 //            System.out.println("No requested pieces: " + noRequestedPieces);
 //            System.out.println("Has all pieces: " + hasAllPieces);
 //            System.out.println("Peer has all pieces: " + peerHasAllPieces);
-            if(noRequestedPieces && !hasAllPieces && peerHasAllPieces) {
+            if (noRequestedPieces && !hasAllPieces && peerHasAllPieces) {
                 //If all pieces have been downloaded, respond to queue of requests
                 //If no requests, I guess just busy wait?
                 //Queue requests to send
                 //todo: only add one request at a time
-                for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
                     // Check if the piece is neither downloaded nor currently being requested by this peer,
                     // along with that, make sure that sendResponses is empty, requests one piece at a time
                     // this is so that each peer has a chance to request a piece from any other peer
@@ -68,14 +65,14 @@ public class SendHandler extends Thread {
                 }
             } else {
                 boolean allPeersHaveWholeFile = true;
-                for(Map.Entry<Integer,Boolean> entry: peerConnection.hostProcess.peerHasWholeFile.entrySet()) {
-                    if(!entry.getValue()) {
+                for (Map.Entry<Integer, Boolean> entry : peerConnection.hostProcess.peerHasWholeFile.entrySet()) {
+                    if (!entry.getValue()) {
                         allPeersHaveWholeFile = false;
                         break;
                     }
                 }
-                if(hasAllPieces && allPeersHaveWholeFile) {
-                    if(peerConnection.sendResponses.isEmpty()) {
+                if (hasAllPieces && allPeersHaveWholeFile) {
+                    if (peerConnection.sendResponses.isEmpty()) {
                         //System.err.println("Host " + peerConnection.hostProcess.selfPeerId + " has all pieces and detected that all peers have all pieces");
                         peerConnection.hostProcess.close();
                         continue; //I think continue and break here would have the same effect since the loop checks for the socket being closed at the beginning
@@ -94,13 +91,13 @@ public class SendHandler extends Thread {
 //                    // System.out.println("Both peers have all pieces, closing connection");
 //                    //peerConnection.close();
 //                }
-                if(hasAllPieces && !peerHasAllPieces) {
+                if (hasAllPieces && !peerHasAllPieces) {
                     //Check the request queue to see if there are any pieces that the peer has requested
                     //If so, send them
                 }
             }
             //Prioritize sending have messages over sending requests and pieces
-            if(!peerConnection.sendResponses.isEmpty()) {
+            if (!peerConnection.sendResponses.isEmpty()) {
                 //Send piece message
                 byte[] pieceIndex = peerConnection.sendResponses.remove();
                 try {
@@ -109,10 +106,9 @@ public class SendHandler extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            }
-            else if (!peerConnection.requestedPieces.isEmpty()) {
+            } else if (!peerConnection.requestedPieces.isEmpty()) {
                 //Send piece message
-                if(peerConnection.currentlyRequestedPiece.get() == -1) {
+                if (peerConnection.currentlyRequestedPiece.get() == -1) {
                     int pieceIndex = peerConnection.requestedPieces.remove();
                     byte[] message = Message.generateRequestMessage(pieceIndex);
                     try {
