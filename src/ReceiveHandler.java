@@ -62,6 +62,23 @@ public class ReceiveHandler extends Thread{
                     case have:
                         System.out.println("Received have message from peer");
                         peerConnection.hostProcess.logger.logReceiveHave(String.valueOf(peerConnection.peerId), interpretation.pieceIndex);
+                        //Update bitmap to reflect that the peer has the piece
+                        peerConnection.peerPieceMap.put(interpretation.pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
+                        //If entire bitfield is Downloaded, set hasAllPieces to true
+                        boolean hasAllPiecesAfterHave = true;
+                        for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                            if(peerConnection.peerPieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                                //System.err.println("Peer " + peerConnection.peerId + " does not have piece " + i);
+                                hasAllPiecesAfterHave = false;
+                                break;
+                            }
+                        }
+                        peerConnection.peerHasAllPieces.set(hasAllPiecesAfterHave);
+                        if(hasAllPiecesAfterHave) {
+                            //System.out.println("Peer has all pieces");
+                            peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
+                            peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+                        }
                         break;
                     case request:
                         System.out.println("Received request message from peer");
