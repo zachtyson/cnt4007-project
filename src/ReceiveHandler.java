@@ -92,8 +92,7 @@ public class ReceiveHandler extends Thread{
                                 //Checking to prevent duplicate log messages
                             }
                         }
-                        boolean havePiecesWeDontHave = peerConnection.peerHasAnyPiecesWeDont();
-                        selfSelfInterested(havePiecesWeDontHave);
+                        selfSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
                         break;
                     case request:
                         peerProcess.printDebug("Received request message from peer");
@@ -167,8 +166,7 @@ public class ReceiveHandler extends Thread{
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                             peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
-                        boolean bitfieldHasPiecesWeDontHave = peerConnection.peerHasAnyPiecesWeDont();
-                        selfSelfInterested(bitfieldHasPiecesWeDontHave);
+                        selfSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
 
                         break;
                     default:
