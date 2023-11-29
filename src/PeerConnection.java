@@ -26,6 +26,8 @@ public class PeerConnection extends Thread {
     AtomicBoolean peerHasAllPieces = new AtomicBoolean(false);
     AtomicInteger currentlyRequestedPiece = new AtomicInteger(-1); // For sake of simplicity a peer can only request one piece at a time from another peer
     //Meaning you can request piece 1 from peer A and piece 2 from peer B at the same time, but you can't request piece 1 from peer A and piece 2 from peer A at the same time
+    AtomicBoolean peerInterested = new AtomicBoolean(false); //If peer is interested in us
+    AtomicBoolean selfInterested = new AtomicBoolean(false); //If we are interested in peer
 
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
         super();
