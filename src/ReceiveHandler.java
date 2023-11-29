@@ -2,7 +2,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Vector;
 
 //ReceiveHandler is in charge of receiving messages from the peer, and passing them to the host process
 //and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
@@ -92,7 +91,7 @@ public class ReceiveHandler extends Thread{
                                 //Checking to prevent duplicate log messages
                             }
                         }
-                        selfSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+                        setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
                         break;
                     case request:
                         peerProcess.printDebug("Received request message from peer");
@@ -166,7 +165,7 @@ public class ReceiveHandler extends Thread{
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                             peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
-                        selfSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+                        setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
 
                         break;
                     default:
@@ -182,7 +181,7 @@ public class ReceiveHandler extends Thread{
         }
     }
 
-    private void selfSelfInterested(boolean bitfieldHasPiecesWeDontHave) {
+    private void setSelfInterested(boolean bitfieldHasPiecesWeDontHave) {
         if(bitfieldHasPiecesWeDontHave) {
             peerProcess.printDebug("Peer has pieces we don't have");
             peerConnection.sendResponses.add(Message.generateInterestedMessage());
