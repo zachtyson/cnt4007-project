@@ -338,7 +338,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     public static byte[] generateRequestMessage(int index) {
-        // 4-byte message length field, file.txt-byte message type field, and a 4 byte message payload
+        // 4-byte message length field, 1 byte message type field, and a 4 byte message payload
         // 4-byte message length field
         int messageLength = 4;
         byte[] requestMessage = new byte[messageLength + 5];
@@ -349,6 +349,17 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         byte[] pieceIndex = ByteBuffer.allocate(4).putInt(index).array();
         System.arraycopy(pieceIndex, 0, requestMessage, 5, 4);
         return requestMessage;
+    }
+
+    public static byte[] generateChokeMessage() {
+
+        int messageLength = 0;
+        byte[] chokeMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.choke);
+        System.arraycopy(headerAndMessageType, 0, chokeMessage, 0, 5);
+
+        // message payload
+        return chokeMessage;
     }
 
     public String ToString(byte[] payload){
@@ -409,7 +420,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
 }
 /*
 After handshaking, each peer can send a stream of actual messages. An actual message
-consists of 4-byte message length field, file.txt-byte message type field, and a message
+consists of 4-byte message length field, 1-byte message type field, and a message
 payload with variable size.
  */
 
