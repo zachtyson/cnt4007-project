@@ -63,10 +63,12 @@ public class ReceiveHandler extends Thread{
                         //honestly im not even sure what to put for interested and not interested
                         //like obviously they tell us what interested and not interested means, but I'm not sure what to do with that information
                         peerProcess.printDebug("Received interested message from peer");
+                        setPeerInterested(true);
                         break;
                     case notInterested:
                         //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
+                        setPeerInterested(false);
                         break;
                     case have:
                         peerProcess.printDebug("Received have message from peer");
@@ -191,6 +193,15 @@ public class ReceiveHandler extends Thread{
             peerProcess.printDebug("Peer does not have pieces we don't have");
             peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
             peerConnection.selfInterested.set(false);
+        }
+    }
+
+    private void setPeerInterested(boolean status) {
+        if(status) {
+            peerConnection.peerInterested.set(true);
+        }
+        else {
+            peerConnection.peerInterested.set(false);
         }
     }
 
