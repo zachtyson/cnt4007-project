@@ -165,6 +165,16 @@ public class ReceiveHandler extends Thread{
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                             peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
+                        boolean bitfieldHasPiecesWeDontHave = peerConnection.peerHasAnyPiecesWeDont();
+                        if(bitfieldHasPiecesWeDontHave) {
+                            peerProcess.printDebug("Peer has pieces we don't have");
+                            peerConnection.sendResponses.add(Message.generateInterestedMessage());
+                        }
+                        else {
+                            peerProcess.printDebug("Peer does not have pieces we don't have");
+                            peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
+                        }
+
                         break;
                     default:
                         System.out.println("Received unknown message from peer");
