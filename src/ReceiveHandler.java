@@ -58,6 +58,9 @@ public class ReceiveHandler extends Thread{
                     case interested:
                         peerProcess.printDebug("Received interested message from peer");
                         break;
+                    case notInterested:
+                        peerProcess.printDebug("Received not interested message from peer");
+                        break;
                     case have:
                         peerProcess.printDebug("Received have message from peer");
                         peerConnection.hostProcess.logger.logReceiveHave(String.valueOf(peerConnection.peerId), interpretation.pieceIndex);
