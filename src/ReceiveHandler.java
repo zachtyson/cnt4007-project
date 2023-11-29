@@ -92,6 +92,15 @@ public class ReceiveHandler extends Thread{
                                 //Checking to prevent duplicate log messages
                             }
                         }
+                        boolean havePiecesWeDontHave = peerConnection.peerHasAnyPiecesWeDont();
+                        if(havePiecesWeDontHave) {
+                            peerProcess.printDebug("Peer has pieces we don't have");
+                            peerConnection.sendResponses.add(Message.generateInterestedMessage());
+                        }
+                        else {
+                            peerProcess.printDebug("Peer does not have pieces we don't have");
+                            peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
+                        }
                         break;
                     case request:
                         peerProcess.printDebug("Received request message from peer");
