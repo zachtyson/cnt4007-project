@@ -352,7 +352,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
     }
 
     public static byte[] generateChokeMessage() {
-
+        //4 byte message length field, 1 byte message type field, and no message payload
         int messageLength = 0;
         byte[] chokeMessage = new byte[messageLength + 5];
         byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.choke);
