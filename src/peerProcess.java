@@ -31,7 +31,7 @@ public class peerProcess {
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
 
-    static final boolean DEBUG = false;
+    static final boolean DEBUG = true;
 
     public static void main(String[] args) {
         // Check for first argument
@@ -96,6 +96,8 @@ public class peerProcess {
 
     public static void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String filePath) throws IOException {
         // todo: there is 100% a bug here
+        // todo: CORRECTION: it is not here, there is a big with sending/receiving pieces, not sure which
+        // because peers that start with thefile don't have the bug but peers that start without the file (and receive it) do
         // the file size is not correct and is slightly larger than the original file
         // for sake of getting other things working, I'm going to ignore this for now
         File file = new File(filePath);
