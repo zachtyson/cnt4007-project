@@ -384,6 +384,17 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return interestedMessage;
     }
 
+    public static byte[] generateNotInterestedMessage() {
+        //4 byte message length field, 1 byte message type field, and no message payload
+        int messageLength = 0;
+        byte[] notInterestedMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.notInterested);
+        System.arraycopy(headerAndMessageType, 0, notInterestedMessage, 0, 5);
+
+        // message payload
+        return notInterestedMessage;
+    }
+
     public String ToString(byte[] payload){
         //break down the payload into the message type, the payload, and the payload length
 
