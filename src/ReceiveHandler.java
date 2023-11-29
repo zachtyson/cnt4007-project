@@ -108,6 +108,13 @@ public class ReceiveHandler extends Thread{
                         peerProcess.printDebug("Currently requested piece set to -1");
                         peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
                         peerConnection.hostProcess.pieceData.put(pieceIndex, piece);
+                        int numPiecesLeft = 0;
+                        for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                            if(peerConnection.hostProcess.pieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
+                                numPiecesLeft++;
+                            }
+                        }
+                        peerConnection.hostProcess.logger.logDownloadedPiece(String.valueOf(peerConnection.peerId), pieceIndex, numPiecesLeft);
                         //send message to host process that piece has been received
                         byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
                         peerProcess.printDebug("Sending message that piece " + pieceIndex + " has been received");
@@ -130,13 +137,6 @@ public class ReceiveHandler extends Thread{
                                 peerConnection.hostProcess.logger.logCompletion();
                             }
                         }
-                        int numPiecesLeft = 0;
-                        for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                            if(peerConnection.hostProcess.pieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
-                                numPiecesLeft++;
-                            }
-                        }
-                        peerConnection.hostProcess.logger.logDownloadedPiece(String.valueOf(peerConnection.peerId), pieceIndex, numPiecesLeft);
                         break;
                     case bitfield:
                         peerProcess.printDebug("Received bitfield message from peer");
