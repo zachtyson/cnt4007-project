@@ -50,15 +50,23 @@ public class ReceiveHandler extends Thread{
 //                }
                 switch(interpretation.Msg) {
                     case choke:
+                        //todo: implement choke
+                        //choke means that you can't request pieces from the peer
                         peerProcess.printDebug("Received choke message from peer");
                         break;
                     case unchoke:
+                        //todo: implement unchoke
+                        //unchoke means that you can request pieces from the peer again
                         peerProcess.printDebug("Received unchoke message from peer");
                         break;
                     case interested:
+                        //todo: implement interested
+                        //honestly im not even sure what to put for interested and not interested
+                        //like obviously they tell us what interested and not interested means, but I'm not sure what to do with that information
                         peerProcess.printDebug("Received interested message from peer");
                         break;
                     case notInterested:
+                        //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
                         break;
                     case have:
