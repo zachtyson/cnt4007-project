@@ -219,7 +219,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         printDebug("Message Type: " + messageType);
         switch (messageType){
             case 0 : //choke
-                if(payloadLength != 1){
+                if(payloadLength != 0){
                     msgMisinterpreter(payload);
                 }
                 else{
@@ -227,7 +227,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 1 : //unchoke
-                if(payloadLength != 1){
+                if(payloadLength != 0){
                     msgMisinterpreter(payload);
                 }
                 else{
@@ -235,7 +235,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 2 : //interested
-                if(payloadLength != 1){
+                if(payloadLength != 0){
                     msgMisinterpreter(payload);
                 }
                 else{
@@ -243,7 +243,7 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 }
                 break;
             case 3 : //notInterested
-                if(payloadLength != 1){
+                if(payloadLength != 0){
                     msgMisinterpreter(payload);
                 }
                 else{
