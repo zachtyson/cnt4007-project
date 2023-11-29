@@ -93,16 +93,7 @@ public class ReceiveHandler extends Thread{
                             }
                         }
                         boolean havePiecesWeDontHave = peerConnection.peerHasAnyPiecesWeDont();
-                        if(havePiecesWeDontHave) {
-                            peerProcess.printDebug("Peer has pieces we don't have");
-                            peerConnection.sendResponses.add(Message.generateInterestedMessage());
-                            peerConnection.selfInterested.set(true);
-                        }
-                        else {
-                            peerProcess.printDebug("Peer does not have pieces we don't have");
-                            peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
-                            peerConnection.selfInterested.set(false);
-                        }
+                        selfSelfInterested(havePiecesWeDontHave);
                         break;
                     case request:
                         peerProcess.printDebug("Received request message from peer");
@@ -177,16 +168,7 @@ public class ReceiveHandler extends Thread{
                             peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
                         boolean bitfieldHasPiecesWeDontHave = peerConnection.peerHasAnyPiecesWeDont();
-                        if(bitfieldHasPiecesWeDontHave) {
-                            peerProcess.printDebug("Peer has pieces we don't have");
-                            peerConnection.sendResponses.add(Message.generateInterestedMessage());
-                            peerConnection.selfInterested.set(true);
-                        }
-                        else {
-                            peerProcess.printDebug("Peer does not have pieces we don't have");
-                            peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
-                            peerConnection.selfInterested.set(false);
-                        }
+                        selfSelfInterested(bitfieldHasPiecesWeDontHave);
 
                         break;
                     default:
@@ -201,6 +183,20 @@ public class ReceiveHandler extends Thread{
             }
         }
     }
+
+    private void selfSelfInterested(boolean bitfieldHasPiecesWeDontHave) {
+        if(bitfieldHasPiecesWeDontHave) {
+            peerProcess.printDebug("Peer has pieces we don't have");
+            peerConnection.sendResponses.add(Message.generateInterestedMessage());
+            peerConnection.selfInterested.set(true);
+        }
+        else {
+            peerProcess.printDebug("Peer does not have pieces we don't have");
+            peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
+            peerConnection.selfInterested.set(false);
+        }
+    }
+
     byte[] receiveMessageLength() throws IOException {
         byte[] expectedLength = peerConnection.in.readNBytes(4);
         if (expectedLength.length < 4) {
