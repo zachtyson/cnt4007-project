@@ -32,7 +32,7 @@ public class SendHandler extends Thread {
         while (!peerConnection.socket.isClosed()) {
             //check to see if peerConnection.socket is closed
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
