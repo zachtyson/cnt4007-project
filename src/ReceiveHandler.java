@@ -96,10 +96,12 @@ public class ReceiveHandler extends Thread{
                         if(havePiecesWeDontHave) {
                             peerProcess.printDebug("Peer has pieces we don't have");
                             peerConnection.sendResponses.add(Message.generateInterestedMessage());
+                            peerConnection.selfInterested.set(true);
                         }
                         else {
                             peerProcess.printDebug("Peer does not have pieces we don't have");
                             peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
+                            peerConnection.selfInterested.set(false);
                         }
                         break;
                     case request:
@@ -178,10 +180,12 @@ public class ReceiveHandler extends Thread{
                         if(bitfieldHasPiecesWeDontHave) {
                             peerProcess.printDebug("Peer has pieces we don't have");
                             peerConnection.sendResponses.add(Message.generateInterestedMessage());
+                            peerConnection.selfInterested.set(true);
                         }
                         else {
                             peerProcess.printDebug("Peer does not have pieces we don't have");
                             peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
+                            peerConnection.selfInterested.set(false);
                         }
 
                         break;
