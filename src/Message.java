@@ -362,6 +362,17 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
         return chokeMessage;
     }
 
+    public static byte[] generateUnchokeMessage() {
+        //4 byte message length field, 1 byte message type field, and no message payload
+        int messageLength = 0;
+        byte[] unchokeMessage = new byte[messageLength + 5];
+        byte[] headerAndMessageType = generateHeaderAndMessageType(messageLength, MsgType.unchoke);
+        System.arraycopy(headerAndMessageType, 0, unchokeMessage, 0, 5);
+
+        // message payload
+        return unchokeMessage;
+    }
+
     public String ToString(byte[] payload){
         //break down the payload into the message type, the payload, and the payload length
 
