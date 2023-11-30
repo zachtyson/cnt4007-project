@@ -1,12 +1,16 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.*;
 
 public class SendHandler extends Thread {
     PeerConnection peerConnection;
     SendHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
+        this.lastMessageTime = Instant.now();
     }
+
+    private volatile Instant lastMessageTime;
 
     @Override
     public void run() {
@@ -47,9 +51,23 @@ public class SendHandler extends Thread {
             boolean hasAllPieces = peerConnection.hostProcess.hasAllPieces.get();
             boolean peerHasAllPieces = peerConnection.peerHasAllPieces.get();
             boolean peerHasAnyPiecesWeDont = peerConnection.peerHasAnyPiecesWeDont();
+            boolean hasChokeAndInterestedMessages = peerConnection.chokeAndInterestedMessages.isEmpty();
 
+            if(!hasChokeAndInterestedMessages) {
+                // Send out a queued choke or unchoke message
+                byte[] chokeOrUnchokeMessage = peerConnection.chokeAndInterestedMessages.remove();
+                try {
+                    if(peerConnection.socket.isClosed()) {
+                        break;
+                    }
+                    sendMessage(chokeOrUnchokeMessage);
+                    peerProcess.printDebug("Sent message to peer (choke or unchoke)");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             //Check for conditions to send outstanding request
-            if(!hasOutstandingRequest && peerHasAnyPiecesWeDont) {
+            else if(!hasOutstandingRequest && peerHasAnyPiecesWeDont) {
                 //This branch means that if there are any pieces that the peer has that this peer doesn't have, request one of them
                 //This branch should only be taken if there is not already an outstanding request
                 List<Integer> eligiblePieces = new ArrayList<>();
@@ -155,6 +173,7 @@ public class SendHandler extends Thread {
     }
     void sendMessage(byte[] msg) throws IOException{
         //stream write the message
+        lastMessageTime = Instant.now();
         peerConnection.out.write(msg);
         peerConnection.out.flush();
 
