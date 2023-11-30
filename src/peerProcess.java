@@ -34,12 +34,12 @@ public class peerProcess {
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
 
-    private List<int> unchokedPeers;
+    private List<Integer> unchokedPeers;
 
-    public PeerProcess() {
-        // Initialize a thread-safe list for unchoked peers
-        this.unchokedPeers = new CopyOnWriteArrayList<>();
-    }
+    // public PeerProcess() {
+    //     // Initialize a thread-safe list for unchoked peers
+    //     this.unchokedPeers = new CopyOnWriteArrayList<>();
+    // }
 
     public void addUnchokedPeer(int peerId) {
         // Add a peer to the list of unchoked peers
@@ -48,12 +48,12 @@ public class peerProcess {
         }
     }
 
-    public void removeUnchokedPeer(String peerId) {
+    public void removeUnchokedPeer(int peerId) {
         // Remove a peer from the list of unchoked peers
         unchokedPeers.remove(peerId);
     }
 
-    public List<String> getUnchokedPeers() {
+    public List<Integer> getUnchokedPeers() {
         // Get a snapshot of the current unchoked peers
         return new CopyOnWriteArrayList<>(unchokedPeers);
     }
