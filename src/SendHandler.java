@@ -10,7 +10,7 @@ public class SendHandler extends Thread {
         this.lastMessageTime = Instant.now();
     }
 
-    private volatile Instant lastMessageTime;
+    private volatile Instant lastMessageTime; //This does nothing currently, but I think I'm going to add a timeout feature
 
     @Override
     public void run() {
