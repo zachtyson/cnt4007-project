@@ -147,4 +147,18 @@ public class SendHandler extends Thread {
 
     }
 
+    public void selectPreferredNeighbors(int k) {
+        // Calculate downloading rates from neighbors
+        // Identify interested neighbors
+        // Select k neighbors with highest downloading rates
+        // Send 'unchoke' messages to preferred neighbors
+        // Send 'choke' messages to unselected neighbors
+    }
+
+    public void selectOptimisticallyUnchokedNeighbor() {
+        // Reselect optimistically unchoked neighbor
+        // Send 'unchoke' message to optimistically unchoked neighbor
+    }
+
+
 }
