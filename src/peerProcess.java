@@ -419,13 +419,15 @@ public class peerProcess {
     }
 
     static void printError(String message) {
-        System.err.println("Error: " + message);
+        String timestamp = java.time.LocalTime.now().toString();
+        System.err.println(timestamp + " Error: " + message);
         //System.exit(1);
     }
 
     static void printDebug(String message) {
         if(DEBUG) {
-            System.out.println("Debug: " + message);
+            String timestamp = java.time.LocalTime.now().toString();
+            System.out.println(timestamp + " Debug: " + message);
         }
     }
 
