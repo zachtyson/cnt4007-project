@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 public class peerProcess {
@@ -32,6 +34,30 @@ public class peerProcess {
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
 
+    private List<int> unchokedPeers;
+
+    public PeerProcess() {
+        // Initialize a thread-safe list for unchoked peers
+        this.unchokedPeers = new CopyOnWriteArrayList<>();
+    }
+
+    public void addUnchokedPeer(int peerId) {
+        // Add a peer to the list of unchoked peers
+        if (!unchokedPeers.contains(peerId)) {
+            unchokedPeers.add(peerId);
+        }
+    }
+
+    public void removeUnchokedPeer(String peerId) {
+        // Remove a peer from the list of unchoked peers
+        unchokedPeers.remove(peerId);
+    }
+
+    public List<String> getUnchokedPeers() {
+        // Get a snapshot of the current unchoked peers
+        return new CopyOnWriteArrayList<>(unchokedPeers);
+    }
+    
     public static void main(String[] args) {
         // Check for first argument
         if (args.length < 1) {
