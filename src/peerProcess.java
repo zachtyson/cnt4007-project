@@ -36,10 +36,10 @@ public class peerProcess {
 
     private List<Integer> unchokedPeers;
 
-    // public PeerProcess() {
-    //     // Initialize a thread-safe list for unchoked peers
-    //     this.unchokedPeers = new CopyOnWriteArrayList<>();
-    // }
+    public void PeerProcess() {
+        // Initialize a thread-safe list for unchoked peers
+        this.unchokedPeers = new CopyOnWriteArrayList<>();
+    }
 
     public void addUnchokedPeer(int peerId) {
         // Add a peer to the list of unchoked peers
