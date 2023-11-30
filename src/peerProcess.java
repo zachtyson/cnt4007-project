@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class peerProcess {
     // From my understanding the first argument is the peerID, which we can see
     // in PeerInfo.cfg as well as page 7 of the project description pdf
@@ -32,6 +34,7 @@ public class peerProcess {
     // TODO: Make some notes and comments on other implementations
 
     static final boolean DEBUG = true;
+    AtomicInteger activeConnections = new AtomicInteger(0);
 
     public static void main(String[] args) {
         // Check for first argument
@@ -88,7 +91,17 @@ public class peerProcess {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        while (activeConnections.get() > 0) {
+            // Optionally, you can add a sleep to avoid busy waiting
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                printError("Interrupted while waiting for connections to close");
+            }
+        }
         logger.logShutdown();
+
         //Iterate over entire map to check if all pieces
         //If all pieces, try to save file
 
@@ -124,16 +137,17 @@ public class peerProcess {
         for(PeerConnection peerConnection : this.peerConnectionVector) {
             if(peerConnection.client) {
                 peerConnection.start();
+                activeConnections.incrementAndGet();
                 //peerConnection.join();
             }
         }
-        //todo come back here and see if this fixed the concurrency issue
-        for(PeerConnection peerConnection : this.peerConnectionVector) {
-            if(peerConnection.client) {
-                //peerConnection.start();
-                peerConnection.join();
-            }
-        }
+//        //todo come back here and see if this fixed the concurrency issue
+//        for(PeerConnection peerConnection : this.peerConnectionVector) {
+//            if(peerConnection.client) {
+//                //peerConnection.start();
+//                //peerConnection.join();
+//            }
+//        }
     }
 
     public static class ServerSocketThread extends Thread {
@@ -194,6 +208,7 @@ public class peerProcess {
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
+                            hostProcess.activeConnections.incrementAndGet();
                             peerConnection.in = new DataInputStream(socket.getInputStream());
                             peerConnection.out = new DataOutputStream(socket.getOutputStream());
                             serverWait.remove(peerConnection);

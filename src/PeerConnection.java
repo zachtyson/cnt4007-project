@@ -74,7 +74,15 @@ public class PeerConnection extends Thread {
         //if it does, send a bitfield message with all 1s
         //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
         startHandlers(); //Starts the send and receive handlers
+        int numPiecesPeerHas = 0;
+        for(int i = 0; i < commonCfg.numPieces; i++) {
+            if(peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
+                numPiecesPeerHas++;
+            }
+        }
+        peerProcess.printError("Host: " + hostProcess.selfPeerId + ", Peer " + peerId + " has " + numPiecesPeerHas + " pieces");
         close();
+        hostProcess.activeConnections.decrementAndGet();
     }
 
     public void startHandlers() {

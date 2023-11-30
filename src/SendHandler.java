@@ -1,4 +1,5 @@
 import java.io.IOException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.*;
@@ -32,11 +33,18 @@ public class SendHandler extends Thread {
                 //e.printStackTrace();
             }
         }
+        boolean hasAllPiecesAtStart = peerConnection.hostProcess.hasAllPieces.get();
+        if(hasAllPiecesAtStart) {
+            peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+            peerConnection.hostProcess.hasAllPieces.set(true);
+        }
+        Random random = new Random();
 
         while (!peerConnection.socket.isClosed()) {
             //check to see if peerConnection.socket is closed
             try {
-                Thread.sleep(100);
+                int sleepTime = random.nextInt(200) + 100;
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -174,8 +182,18 @@ public class SendHandler extends Thread {
     void sendMessage(byte[] msg) throws IOException{
         //stream write the message
         lastMessageTime = Instant.now();
-        peerConnection.out.write(msg);
-        peerConnection.out.flush();
+        if(peerConnection.socket.isClosed() || peerConnection.out == null) {
+            return;
+        }
+
+        try {
+            peerConnection.out.write(msg);
+            peerConnection.out.flush();
+        } catch (SocketException e) {
+            //e.printStackTrace();
+            //The socket is closed, so don't do anything
+        }
+
 
     }
 

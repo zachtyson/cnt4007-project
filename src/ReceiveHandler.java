@@ -135,13 +135,23 @@ public class ReceiveHandler extends Thread{
                                 break;
                             }
                         }
+                        //TODO: THIS IS A HACKY WAY TO DO THIS, FIX THIS LATER
+                    {
                         if(hasAllPiecesAfterReceieve) {
                             boolean previousValue = peerConnection.hostProcess.hasAllPieces.getAndSet(true);
                             if(!previousValue) {
                                 peerConnection.hostProcess.logger.logCompletion();
+                                byte[] bitmapMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+                                peerConnection.chokeAndInterestedMessages.add(bitmapMessage);
+                                try{
+                                    Thread.sleep(5000);
+                                } catch (InterruptedException e) {
+                                }
                             }
                         }
-                        break;
+                    }
+
+                    break;
                     case bitfield:
                         peerProcess.printDebug("Received bitfield message from peer");
                         for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
@@ -179,17 +189,17 @@ public class ReceiveHandler extends Thread{
             } catch (IOException e) {
                 //e.printStackTrace();
                 //peerProcess.printError("Connection closed");
-                System.out.println(e.getMessage());
-                peerProcess.printError("Peer+ " + peerConnection.hostProcess.selfPeerId +" Connection closed");
+                //peerProcess.printError("Peer+ " + peerConnection.hostProcess.selfPeerId +" Connection closed");
                 peerConnection.close();
                 break;
             }
         }
+        //peerConnection.hostProcess.logger.logShutdown();
     }
 
     private void setSelfInterested(boolean peerHasPiecesWeDont) throws IOException {
         if(peerConnection.selfInterested.get() == peerHasPiecesWeDont) {
-            System.out.println("Peer already has correct interested status");
+            //If we're already interested and the peer has pieces we don't have, we don't need to send another interested message
             return;
         }
         if(peerHasPiecesWeDont) {
@@ -197,7 +207,6 @@ public class ReceiveHandler extends Thread{
             //byte[] message = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
             //peerConnection.sendResponses.add(message);
             byte[] message = Message.generateInterestedMessage();
-            System.out.println("Peer " + peerConnection.hostProcess.selfPeerId + " is interested in peer " + peerConnection.peerId + Arrays.toString(message));
             peerConnection.chokeAndInterestedMessages.add(message);
             peerConnection.selfInterested.set(true);
         }
@@ -209,7 +218,6 @@ public class ReceiveHandler extends Thread{
     }
 
     private void setPeerInterested(boolean status) {
-        System.out.println("Peer " + peerConnection.peerId + " is " + (status ? "" : "not ") + "interested BBBB");
         if(peerConnection.peerInterested.get() == status) {
             return;
         }
@@ -224,7 +232,6 @@ public class ReceiveHandler extends Thread{
 
         ByteBuffer wrapped = ByteBuffer.wrap(expectedLength);
         int expectedLengthInt = wrapped.getInt();
-        System.out.println("Expected length: " + expectedLengthInt);
         //Type = 5th byte
         byte[] type = peerConnection.in.readNBytes(1);
 
