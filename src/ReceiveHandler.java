@@ -36,7 +36,7 @@ public class ReceiveHandler extends Thread{
                     // continue;
                 }
                 clearBuffer();
-                peerProcess.printDebug("Received message: " + Arrays.toString(message));
+                peerProcess.printDebug("Peer+ " + peerConnection.hostProcess.selfPeerId +"Received message: " + Arrays.toString(message) + " from peer " + peerConnection.peerId);
                 Message.Interpretation interpretation = Message.msgInterpret(message);
 //                if(interpretation.Msg == MsgType.bitfield) {
 //                    //Bitwise, set the pieces that the peer has
@@ -63,11 +63,13 @@ public class ReceiveHandler extends Thread{
                         //honestly im not even sure what to put for interested and not interested
                         //like obviously they tell us what interested and not interested means, but I'm not sure what to do with that information
                         peerProcess.printDebug("Received interested message from peer");
+                        peerConnection.hostProcess.logger.logReceiveInterested(String.valueOf(peerConnection.peerId));
                         setPeerInterested(true);
                         break;
                     case notInterested:
                         //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
+                        peerConnection.hostProcess.logger.logReceiveNotInterested(String.valueOf(peerConnection.peerId));
                         setPeerInterested(false);
                         break;
                     case have:
@@ -176,17 +178,27 @@ public class ReceiveHandler extends Thread{
                 }
             } catch (IOException e) {
                 //e.printStackTrace();
-                peerProcess.printError("Connection closed");
+                //peerProcess.printError("Connection closed");
+                System.out.println(e.getMessage());
+                peerProcess.printError("Peer+ " + peerConnection.hostProcess.selfPeerId +" Connection closed");
                 peerConnection.close();
                 break;
             }
         }
     }
 
-    private void setSelfInterested(boolean bitfieldHasPiecesWeDontHave) {
-        if(bitfieldHasPiecesWeDontHave) {
+    private void setSelfInterested(boolean peerHasPiecesWeDont) throws IOException {
+        if(peerConnection.selfInterested.get() == peerHasPiecesWeDont) {
+            System.out.println("Peer already has correct interested status");
+            return;
+        }
+        if(peerHasPiecesWeDont) {
             peerProcess.printDebug("Peer has pieces we don't have");
-            peerConnection.sendResponses.add(Message.generateInterestedMessage());
+            //byte[] message = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+            //peerConnection.sendResponses.add(message);
+            byte[] message = Message.generateInterestedMessage();
+            System.out.println("Peer " + peerConnection.hostProcess.selfPeerId + " is interested in peer " + peerConnection.peerId + Arrays.toString(message));
+            peerConnection.sendResponses.add(message);
             peerConnection.selfInterested.set(true);
         }
         else {
@@ -197,12 +209,11 @@ public class ReceiveHandler extends Thread{
     }
 
     private void setPeerInterested(boolean status) {
-        if(status) {
-            peerConnection.peerInterested.set(true);
+        System.out.println("Peer " + peerConnection.peerId + " is " + (status ? "" : "not ") + "interested BBBB");
+        if(peerConnection.peerInterested.get() == status) {
+            return;
         }
-        else {
-            peerConnection.peerInterested.set(false);
-        }
+        peerConnection.peerInterested.set(status);
     }
 
     byte[] receiveMessageLength() throws IOException {
@@ -213,11 +224,12 @@ public class ReceiveHandler extends Thread{
 
         ByteBuffer wrapped = ByteBuffer.wrap(expectedLength);
         int expectedLengthInt = wrapped.getInt();
+        System.out.println("Expected length: " + expectedLengthInt);
         //Type = 5th byte
         byte[] type = peerConnection.in.readNBytes(1);
 
 
-        if (expectedLengthInt <= 0) {
+        if (expectedLengthInt < 0) {
             throw new IOException("Invalid message length: " + expectedLengthInt);
         }
 
