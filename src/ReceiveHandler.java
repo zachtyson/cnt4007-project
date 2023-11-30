@@ -198,12 +198,12 @@ public class ReceiveHandler extends Thread{
             //peerConnection.sendResponses.add(message);
             byte[] message = Message.generateInterestedMessage();
             System.out.println("Peer " + peerConnection.hostProcess.selfPeerId + " is interested in peer " + peerConnection.peerId + Arrays.toString(message));
-            peerConnection.sendResponses.add(message);
+            peerConnection.chokeAndInterestedMessages.add(message);
             peerConnection.selfInterested.set(true);
         }
         else {
             peerProcess.printDebug("Peer does not have pieces we don't have");
-            peerConnection.sendResponses.add(Message.generateNotInterestedMessage());
+            peerConnection.chokeAndInterestedMessages.add(Message.generateNotInterestedMessage());
             peerConnection.selfInterested.set(false);
         }
     }
