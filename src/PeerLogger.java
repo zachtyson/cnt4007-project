@@ -155,7 +155,7 @@ public class PeerLogger {
         //Whenever a peer downloads the complete file, it generates the following log:
         //[Time]: Peer [peer_ID] has downloaded the complete file.
         //Not required by the assignment, but useful for debugging
-        logger.info("Peer " + peerID + " has downloaded the complete file.");
+        logger.info("Peer " + peerID + " has a download rate of " + downloadRate + " from " + neighborID + ".");
     }
 
 }
