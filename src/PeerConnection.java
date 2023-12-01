@@ -3,6 +3,8 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -33,6 +35,7 @@ public class PeerConnection extends Thread {
     AtomicBoolean peerInterested = new AtomicBoolean(false); //If peer is interested in us
     AtomicBoolean selfInterested = new AtomicBoolean(false); //If we are interested in peer
     ConcurrentMap<LocalDateTime,Integer> messageBytesReceived = new ConcurrentHashMap<>(); //Used to keep track of how many bytes we've received from this specific peer
+    public final int oldestMessageToKeepInSeconds; //Used to keep track of how many seconds to keep messages in the messageBytesReceived map
     AtomicReference<Double> downloadRate = new AtomicReference<>(0.0); //Used to keep track of the download rate of this specific peer
     //Weird workaround since AtomicDouble doesn't exist
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
@@ -43,12 +46,52 @@ public class PeerConnection extends Thread {
         this.client = client;
         this.hostProcess = hostProcess;
         this.commonCfg = commonCfg;
+        //oldestMessageToKeepInSeconds is the maximum of the unchoking interval and the optimistic unchoking interval in seconds * 2
+        oldestMessageToKeepInSeconds = Math.max(commonCfg.unchokingInterval,commonCfg.optimisticUnchokingInterval) * 2;
         //Set bitfield to all 0s
         //all elements are false by default
         peerPieceMap = new ConcurrentHashMap<>();
         for(int i = 0; i < commonCfg.numPieces; i++) {
             peerPieceMap.put(i, peerProcess.pieceStatus.EMPTY);
         }
+    }
+
+    void addToMessageBytesReceived(LocalDateTime time, int bytesReceived) {
+        messageBytesReceived.put(time,bytesReceived);
+        printAverageDownloadRate(messageBytesReceived,commonCfg.unchokingInterval,oldestMessageToKeepInSeconds);
+    }
+    public void printAverageDownloadRate(ConcurrentMap<LocalDateTime, Integer> downloadData, int pastSeconds, int oldestMessageToKeepInSeconds) {
+        // Get the current time
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        // Calculate the start time for the past p seconds
+        LocalDateTime startTime = currentTime.minusSeconds(pastSeconds);
+
+        // Initialize variables to track total bytes downloaded and time elapsed
+        int totalBytesDownloaded = 0;
+        long timeElapsedMillis = 0;
+
+        // Iterate over the download data map
+        for (Map.Entry<LocalDateTime, Integer> entry : downloadData.entrySet()) {
+            LocalDateTime downloadTime = entry.getKey();
+            int bytesDownloaded = entry.getValue();
+
+            // Check if the download time is within the past p seconds
+            if (downloadTime.isAfter(startTime)) {
+                totalBytesDownloaded += bytesDownloaded;
+                timeElapsedMillis += ChronoUnit.MILLIS.between(downloadTime, currentTime);
+            } else if (downloadTime.isBefore(currentTime.minusSeconds(oldestMessageToKeepInSeconds))) {
+                // Remove the entry if it is older than the oldest message we want to keep
+                downloadData.remove(downloadTime);
+            }
+        }
+
+        // Calculate the average download rate in bytes per second
+        double averageDownloadRateBps = (double) totalBytesDownloaded / timeElapsedMillis;
+
+        // Print the average download rate
+        System.out.println("Average download rate over the past " + pastSeconds + " seconds: " + averageDownloadRateBps + " bps");
+        hostProcess.logger.logFiveSecondDownloadRate(String.valueOf(peerId),averageDownloadRateBps);
     }
 
     public void setSocket(Socket socket) {
