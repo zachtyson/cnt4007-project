@@ -92,6 +92,7 @@ public class PeerConnection extends Thread {
         // Print the average download rate
         System.out.println("Average download rate over the past " + pastSeconds + " seconds: " + averageDownloadRateBps + " bps");
         hostProcess.logger.logFiveSecondDownloadRate(String.valueOf(peerId),averageDownloadRateBps);
+        downloadRate.set(averageDownloadRateBps);
     }
 
     public void setSocket(Socket socket) {
