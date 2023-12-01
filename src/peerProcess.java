@@ -34,10 +34,34 @@ public class peerProcess {
     // PieceSize [int] - Specifies the size of a piece in bytes
     // NumberOfPreferredNeighbors [int] - Sounds self-explanatory, but I have no idea what this means -Zach
     // TODO: Make some notes and comments on other implementations
-    
+
     private CopyOnWriteArrayList<Integer> unchokedPeers;
 
-   
+
+    //Notes for choking / unchoking
+    // k = number of preferred neighbors, Commoncfg.numberOfPreferredNeighbors,
+    // so k preferred unchoked peers + 1 optimistically unchoked peer
+    // Each peer only uploads to unchoked neighbors
+    // At startup the preferred peers are selected at random
+
+    // Every unchokingInterval seconds, a peer recalculates its preferred neighbors.
+    // It calculates the downloading rate from each neighbor during the last unchoking interval.
+    // It selects k neighbors that provided data at the highest rate.
+    // In case of a tie, the selection is made randomly.
+    // When this happens, send unchoke to all peers in the list of preferred neighbors that weren't already unchoked
+    // and send choke to all peers that were unchoked but are no longer in the list of preferred neighbors. Choke can be sent again but unchoke should only be sent once.
+
+
+    // Every OptimisticUnchokingInterval seconds, a peer optimistically unchokes one of its neighbors at random.
+    // This is a separate operation from the regular unchoking described above.
+    // The optimistically unchoked neighbor is selected at random from all the neighbors that are interested in downloading from this peer.
+    // If there is no such neighbor, no optimistically unchoked neighbor is selected for this unchoking interval.
+    // When this happens, send unchoke to the optimistically unchoked neighbor, and I guess just kick out the old optimistically unchoked neighbor(?)
+
+
+    //Intended behavior:
+
+
 
     public void addUnchokedPeer(int peerId) {
         // Add a peer to the list of unchoked peers

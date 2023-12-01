@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PeerConnection extends Thread {
-    boolean debug = false; // Set to true to enable debug messages
     public int peerId;
     public String peerAddress;
     public int peerPort;
