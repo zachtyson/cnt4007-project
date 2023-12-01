@@ -122,7 +122,7 @@ public class ReceiveHandler extends Thread{
                         //send message to host process that piece has been received
                         byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
                         peerProcess.printDebug("Sending message that piece " + pieceIndex + " has been received");
-                        peerConnection.sendResponses.add(messageToHost);
+                        //peerConnection.sendResponses.add(messageToHost); //dont think this is necessary
                         for(PeerConnection peerConnection: peerConnection.hostProcess.peerConnectionVector) {
                             peerConnection.sendResponses.add(messageToHost);
                         }
