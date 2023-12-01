@@ -40,6 +40,9 @@ public class SendHandler extends Thread {
         }
         Random random = new Random();
 
+        boolean sentHasBothNotInterested = false;
+        //if both this peer and the peer it is connected to have all pieces, send not interested message
+
         while (!peerConnection.socket.isClosed()) {
             //check to see if peerConnection.socket is closed
             try {
@@ -137,7 +140,17 @@ public class SendHandler extends Thread {
                 peerConnection.currentlyRequestedPiece.set(-1);
             }
             else if (hasAllPieces && peerHasAllPieces){
-                //todo send not interested message to peer
+                // Send not interested message if both peers have all pieces
+                if(!sentHasBothNotInterested) {
+                    byte[] notInterestedMessage = Message.generateNotInterestedMessage();
+                    try {
+                        sendMessage(notInterestedMessage);
+                        peerProcess.printDebug("Sent message to peer (not interested)");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    sentHasBothNotInterested = true;
+                }
                 //if both peers have all pieces, check to see if all peers have all pieces
                 // and if so, close the connection
                 boolean allPeersHaveWholeFile = true;
