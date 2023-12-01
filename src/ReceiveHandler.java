@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -106,6 +107,11 @@ public class ReceiveHandler extends Thread{
                         break;
                     case piece:
                         peerProcess.printDebug("Received piece message from peer");
+
+                        //add to bytes received, this is for measuring download speed
+                        int messageLength = message.length;
+                        peerConnection.addToMessageBytesReceived(LocalDateTime.now(), messageLength);
+
                         int pieceIndex = interpretation.pieceIndex;
                         byte[] piece = interpretation.messagePayload;
                         peerConnection.currentlyRequestedPiece.set(-1); //Set to -1 to indicate that no piece is currently being requested
