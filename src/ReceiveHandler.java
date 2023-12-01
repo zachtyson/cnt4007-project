@@ -65,13 +65,13 @@ public class ReceiveHandler extends Thread{
                         //like obviously they tell us what interested and not interested means, but I'm not sure what to do with that information
                         peerProcess.printDebug("Received interested message from peer");
                         peerConnection.hostProcess.logger.logReceiveInterested(String.valueOf(peerConnection.peerId));
-                        setPeerInterested(true);
+                        peerConnection.setPeerInterested(true);
                         break;
                     case notInterested:
                         //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
                         peerConnection.hostProcess.logger.logReceiveNotInterested(String.valueOf(peerConnection.peerId));
-                        setPeerInterested(false);
+                        peerConnection.setPeerInterested(false);
                         break;
                     case have:
                         peerProcess.printDebug("Received have message from peer");
@@ -96,7 +96,7 @@ public class ReceiveHandler extends Thread{
                                 //Checking to prevent duplicate log messages
                             }
                         }
-                        setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+                        peerConnection.setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
                         break;
                     case request:
                         peerProcess.printDebug("Received request message from peer");
@@ -181,7 +181,7 @@ public class ReceiveHandler extends Thread{
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                             peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
-                        setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+                        peerConnection.setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
 
                         break;
                     default:
@@ -197,33 +197,6 @@ public class ReceiveHandler extends Thread{
             }
         }
         //peerConnection.hostProcess.logger.logShutdown();
-    }
-
-    private void setSelfInterested(boolean peerHasPiecesWeDont) throws IOException {
-        if(peerConnection.selfInterested.get() == peerHasPiecesWeDont) {
-            //If we're already interested and the peer has pieces we don't have, we don't need to send another interested message
-            return;
-        }
-        if(peerHasPiecesWeDont) {
-            peerProcess.printDebug("Peer has pieces we don't have");
-            //byte[] message = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
-            //peerConnection.sendResponses.add(message);
-            byte[] message = Message.generateInterestedMessage();
-            peerConnection.chokeAndInterestedMessages.add(message);
-            peerConnection.selfInterested.set(true);
-        }
-        else {
-            peerProcess.printDebug("Peer does not have pieces we don't have");
-            peerConnection.chokeAndInterestedMessages.add(Message.generateNotInterestedMessage());
-            peerConnection.selfInterested.set(false);
-        }
-    }
-
-    private void setPeerInterested(boolean status) {
-        if(peerConnection.peerInterested.get() == status) {
-            return;
-        }
-        peerConnection.peerInterested.set(status);
     }
 
     byte[] receiveMessageLength() throws IOException {

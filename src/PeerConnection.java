@@ -314,5 +314,31 @@ public class PeerConnection extends Thread {
         return message;
     }
 
+    public void setSelfInterested(boolean peerHasPiecesWeDont) throws IOException {
+        if(selfInterested.get() == peerHasPiecesWeDont) {
+            //If we're already interested and the peer has pieces we don't have, we don't need to send another interested message
+            return;
+        }
+        if(peerHasPiecesWeDont) {
+            peerProcess.printDebug("Peer has pieces we don't have");
+            //byte[] message = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+            //peerConnection.sendResponses.add(message);
+            byte[] message = Message.generateInterestedMessage();
+            chokeAndInterestedMessages.add(message);
+            selfInterested.set(true);
+        }
+        else {
+            peerProcess.printDebug("Peer does not have pieces we don't have");
+            chokeAndInterestedMessages.add(Message.generateNotInterestedMessage());
+            selfInterested.set(false);
+        }
+    }
+
+    public void setPeerInterested(boolean status) {
+        if(peerInterested.get() == status) {
+            return;
+        }
+        peerInterested.set(status);
+    }
 
 }
