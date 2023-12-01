@@ -2,11 +2,14 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.time.LocalDateTime;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PeerConnection extends Thread {
     boolean debug = false; // Set to true to enable debug messages
@@ -29,7 +32,9 @@ public class PeerConnection extends Thread {
     //Meaning you can request piece 1 from peer A and piece 2 from peer B at the same time, but you can't request piece 1 from peer A and piece 2 from peer A at the same time
     AtomicBoolean peerInterested = new AtomicBoolean(false); //If peer is interested in us
     AtomicBoolean selfInterested = new AtomicBoolean(false); //If we are interested in peer
-
+    ConcurrentMap<LocalDateTime,Integer> messageBytesReceived = new ConcurrentHashMap<>(); //Used to keep track of how many bytes we've received from this specific peer
+    AtomicReference<Double> downloadRate = new AtomicReference<>(0.0); //Used to keep track of the download rate of this specific peer
+    //Weird workaround since AtomicDouble doesn't exist
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
         super();
         this.peerId = peerId;
