@@ -148,7 +148,11 @@ public class peerProcess {
             }
         }
         logger.logShutdown();
-
+        try {
+            byteMapToFile(pieceData, fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         //Iterate over entire map to check if all pieces
         //If all pieces, try to save file
 
