@@ -137,6 +137,7 @@ public class SendHandler extends Thread {
                 peerConnection.currentlyRequestedPiece.set(-1);
             }
             else if (hasAllPieces && peerHasAllPieces){
+                //todo send not interested message to peer
                 //if both peers have all pieces, check to see if all peers have all pieces
                 // and if so, close the connection
                 boolean allPeersHaveWholeFile = true;
