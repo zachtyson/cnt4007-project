@@ -1,8 +1,8 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.Vector;
 
 //ReceiveHandler is in charge of receiving messages from the peer, and passing them to the host process
 //and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
@@ -37,7 +37,7 @@ public class ReceiveHandler extends Thread{
                     // continue;
                 }
                 clearBuffer();
-                peerProcess.printDebug("Received message: " + Arrays.toString(message));
+                peerProcess.printDebug("Peer+ " + peerConnection.hostProcess.selfPeerId +"Received message: " + Arrays.toString(message) + " from peer " + peerConnection.peerId);
                 Message.Interpretation interpretation = Message.msgInterpret(message);
 //                if(interpretation.Msg == MsgType.bitfield) {
 //                    //Bitwise, set the pieces that the peer has
@@ -64,10 +64,14 @@ public class ReceiveHandler extends Thread{
                         //honestly im not even sure what to put for interested and not interested
                         //like obviously they tell us what interested and not interested means, but I'm not sure what to do with that information
                         peerProcess.printDebug("Received interested message from peer");
+                        peerConnection.hostProcess.logger.logReceiveInterested(String.valueOf(peerConnection.peerId));
+                        peerConnection.setPeerInterested(true);
                         break;
                     case notInterested:
                         //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
+                        peerConnection.hostProcess.logger.logReceiveNotInterested(String.valueOf(peerConnection.peerId));
+                        peerConnection.setPeerInterested(false);
                         break;
                     case have:
                         peerProcess.printDebug("Received have message from peer");
@@ -92,6 +96,7 @@ public class ReceiveHandler extends Thread{
                                 //Checking to prevent duplicate log messages
                             }
                         }
+                        peerConnection.setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
                         break;
                     case request:
                         peerProcess.printDebug("Received request message from peer");
@@ -102,6 +107,11 @@ public class ReceiveHandler extends Thread{
                         break;
                     case piece:
                         peerProcess.printDebug("Received piece message from peer");
+
+                        //add to bytes received, this is for measuring download speed
+                        int messageLength = message.length;
+                        peerConnection.addToMessageBytesReceived(LocalDateTime.now(), messageLength);
+
                         int pieceIndex = interpretation.pieceIndex;
                         byte[] piece = interpretation.messagePayload;
                         peerConnection.currentlyRequestedPiece.set(-1); //Set to -1 to indicate that no piece is currently being requested
@@ -118,7 +128,7 @@ public class ReceiveHandler extends Thread{
                         //send message to host process that piece has been received
                         byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
                         peerProcess.printDebug("Sending message that piece " + pieceIndex + " has been received");
-                        peerConnection.sendResponses.add(messageToHost);
+                        //peerConnection.sendResponses.add(messageToHost); //dont think this is necessary
                         for(PeerConnection peerConnection: peerConnection.hostProcess.peerConnectionVector) {
                             peerConnection.sendResponses.add(messageToHost);
                         }
@@ -131,13 +141,19 @@ public class ReceiveHandler extends Thread{
                                 break;
                             }
                         }
+                        //TODO: THIS IS A HACKY WAY TO DO THIS, FIX THIS LATER
+                    {
                         if(hasAllPiecesAfterReceieve) {
                             boolean previousValue = peerConnection.hostProcess.hasAllPieces.getAndSet(true);
                             if(!previousValue) {
                                 peerConnection.hostProcess.logger.logCompletion();
+                                byte[] bitmapMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+                                peerConnection.sendResponses.add(bitmapMessage);
                             }
                         }
-                        break;
+                    }
+
+                    break;
                     case bitfield:
                         peerProcess.printDebug("Received bitfield message from peer");
                         for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
@@ -165,6 +181,8 @@ public class ReceiveHandler extends Thread{
                             peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
                             peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
                         }
+                        peerConnection.setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+
                         break;
                     default:
                         System.out.println("Received unknown message from peer");
@@ -172,12 +190,15 @@ public class ReceiveHandler extends Thread{
                 }
             } catch (IOException e) {
                 //e.printStackTrace();
-                peerProcess.printError("Connection closed");
+                //peerProcess.printError("Connection closed");
+                //peerProcess.printError("Peer+ " + peerConnection.hostProcess.selfPeerId +" Connection closed");
                 peerConnection.close();
                 break;
             }
         }
+        //peerConnection.hostProcess.logger.logShutdown();
     }
+
     byte[] receiveMessageLength() throws IOException {
         byte[] expectedLength = peerConnection.in.readNBytes(4);
         if (expectedLength.length < 4) {
@@ -190,7 +211,7 @@ public class ReceiveHandler extends Thread{
         byte[] type = peerConnection.in.readNBytes(1);
 
 
-        if (expectedLengthInt <= 0) {
+        if (expectedLengthInt < 0) {
             throw new IOException("Invalid message length: " + expectedLengthInt);
         }
 

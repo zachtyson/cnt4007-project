@@ -2,14 +2,18 @@ import java.io.*;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PeerConnection extends Thread {
-    boolean debug = false; // Set to true to enable debug messages
     public int peerId;
     public String peerAddress;
     public int peerPort;
@@ -23,10 +27,16 @@ public class PeerConnection extends Thread {
     ReceiveHandler receiveHandler;
     peerProcess hostProcess;
     Queue<byte[]> sendResponses = new ConcurrentLinkedQueue<>();
+    Queue<byte[]> chokeAndInterestedMessages = new ConcurrentLinkedQueue<>(); //queue for choke and interested messages, for some reason didn't work when I tried to use the same queue as sendResponses
     AtomicBoolean peerHasAllPieces = new AtomicBoolean(false);
     AtomicInteger currentlyRequestedPiece = new AtomicInteger(-1); // For sake of simplicity a peer can only request one piece at a time from another peer
     //Meaning you can request piece 1 from peer A and piece 2 from peer B at the same time, but you can't request piece 1 from peer A and piece 2 from peer A at the same time
-
+    AtomicBoolean peerInterested = new AtomicBoolean(false); //If peer is interested in us
+    AtomicBoolean selfInterested = new AtomicBoolean(false); //If we are interested in peer
+    ConcurrentMap<LocalDateTime,Integer> messageBytesReceived = new ConcurrentHashMap<>(); //Used to keep track of how many bytes we've received from this specific peer
+    public final int oldestMessageToKeepInSeconds; //Used to keep track of how many seconds to keep messages in the messageBytesReceived map
+    AtomicReference<Double> downloadRate = new AtomicReference<>(0.0); //Used to keep track of the download rate of this specific peer
+    //Weird workaround since AtomicDouble doesn't exist
     public PeerConnection(int peerId, String peerAddress, int peerPort, peerProcess hostProcess, Boolean client, peerProcess.CommonCfg commonCfg) {
         super();
         this.peerId = peerId;
@@ -35,12 +45,53 @@ public class PeerConnection extends Thread {
         this.client = client;
         this.hostProcess = hostProcess;
         this.commonCfg = commonCfg;
+        //oldestMessageToKeepInSeconds is the maximum of the unchoking interval and the optimistic unchoking interval in seconds * 2
+        oldestMessageToKeepInSeconds = Math.max(commonCfg.unchokingInterval,commonCfg.optimisticUnchokingInterval) * 2;
         //Set bitfield to all 0s
         //all elements are false by default
         peerPieceMap = new ConcurrentHashMap<>();
         for(int i = 0; i < commonCfg.numPieces; i++) {
             peerPieceMap.put(i, peerProcess.pieceStatus.EMPTY);
         }
+    }
+
+    void addToMessageBytesReceived(LocalDateTime time, int bytesReceived) {
+        messageBytesReceived.put(time,bytesReceived);
+        printAverageDownloadRate(messageBytesReceived,commonCfg.unchokingInterval,oldestMessageToKeepInSeconds);
+    }
+    public void printAverageDownloadRate(ConcurrentMap<LocalDateTime, Integer> downloadData, int pastSeconds, int oldestMessageToKeepInSeconds) {
+        // Get the current time
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        // Calculate the start time for the past p seconds
+        LocalDateTime startTime = currentTime.minusSeconds(pastSeconds);
+
+        // Initialize variables to track total bytes downloaded and time elapsed
+        int totalBytesDownloaded = 0;
+        long timeElapsedMillis = 0;
+
+        // Iterate over the download data map
+        for (Map.Entry<LocalDateTime, Integer> entry : downloadData.entrySet()) {
+            LocalDateTime downloadTime = entry.getKey();
+            int bytesDownloaded = entry.getValue();
+
+            // Check if the download time is within the past p seconds
+            if (downloadTime.isAfter(startTime)) {
+                totalBytesDownloaded += bytesDownloaded;
+                timeElapsedMillis += ChronoUnit.MILLIS.between(downloadTime, currentTime);
+            } else if (downloadTime.isBefore(currentTime.minusSeconds(oldestMessageToKeepInSeconds))) {
+                // Remove the entry if it is older than the oldest message we want to keep
+                downloadData.remove(downloadTime);
+            }
+        }
+
+        // Calculate the average download rate in bytes per second
+        double averageDownloadRateBps = (double) totalBytesDownloaded / timeElapsedMillis;
+
+        // Print the average download rate
+        System.out.println("Average download rate over the past " + pastSeconds + " seconds: " + averageDownloadRateBps + " bps");
+        hostProcess.logger.logFiveSecondDownloadRate(String.valueOf(peerId),averageDownloadRateBps);
+        downloadRate.set(averageDownloadRateBps);
     }
 
     public void setSocket(Socket socket) {
@@ -71,7 +122,15 @@ public class PeerConnection extends Thread {
         //if it does, send a bitfield message with all 1s
         //the assignment doesn't specify if a peer can start with a partial file, so I'm assuming now for now just to make things easier
         startHandlers(); //Starts the send and receive handlers
+        int numPiecesPeerHas = 0;
+        for(int i = 0; i < commonCfg.numPieces; i++) {
+            if(peerPieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
+                numPiecesPeerHas++;
+            }
+        }
+        peerProcess.printError("Host: " + hostProcess.selfPeerId + ", Peer " + peerId + " has " + numPiecesPeerHas + " pieces");
         close();
+        hostProcess.activeConnections.decrementAndGet();
     }
 
     public void startHandlers() {
@@ -255,5 +314,31 @@ public class PeerConnection extends Thread {
         return message;
     }
 
+    public void setSelfInterested(boolean peerHasPiecesWeDont) throws IOException {
+        if(selfInterested.get() == peerHasPiecesWeDont) {
+            //If we're already interested and the peer has pieces we don't have, we don't need to send another interested message
+            return;
+        }
+        if(peerHasPiecesWeDont) {
+            peerProcess.printDebug("Peer has pieces we don't have");
+            //byte[] message = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+            //peerConnection.sendResponses.add(message);
+            byte[] message = Message.generateInterestedMessage();
+            chokeAndInterestedMessages.add(message);
+            selfInterested.set(true);
+        }
+        else {
+            peerProcess.printDebug("Peer does not have pieces we don't have");
+            chokeAndInterestedMessages.add(Message.generateNotInterestedMessage());
+            selfInterested.set(false);
+        }
+    }
+
+    public void setPeerInterested(boolean status) {
+        if(peerInterested.get() == status) {
+            return;
+        }
+        peerInterested.set(status);
+    }
 
 }

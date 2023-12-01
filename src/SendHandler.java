@@ -1,12 +1,17 @@
 import java.io.IOException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.*;
 
 public class SendHandler extends Thread {
     PeerConnection peerConnection;
     SendHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
+        this.lastMessageTime = Instant.now();
     }
+
+    private volatile Instant lastMessageTime; //This does nothing currently, but I think I'm going to add a timeout feature
 
     @Override
     public void run() {
@@ -28,11 +33,21 @@ public class SendHandler extends Thread {
                 //e.printStackTrace();
             }
         }
+        boolean hasAllPiecesAtStart = peerConnection.hostProcess.hasAllPieces.get();
+        if(hasAllPiecesAtStart) {
+            peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+            peerConnection.hostProcess.hasAllPieces.set(true);
+        }
+        Random random = new Random();
+
+        boolean sentHasBothNotInterested = false;
+        //if both this peer and the peer it is connected to have all pieces, send not interested message
 
         while (!peerConnection.socket.isClosed()) {
             //check to see if peerConnection.socket is closed
             try {
-                Thread.sleep(100);
+                int sleepTime = random.nextInt(200) + 100;
+                Thread.sleep(sleepTime);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -47,9 +62,23 @@ public class SendHandler extends Thread {
             boolean hasAllPieces = peerConnection.hostProcess.hasAllPieces.get();
             boolean peerHasAllPieces = peerConnection.peerHasAllPieces.get();
             boolean peerHasAnyPiecesWeDont = peerConnection.peerHasAnyPiecesWeDont();
+            boolean hasChokeAndInterestedMessages = peerConnection.chokeAndInterestedMessages.isEmpty();
 
+            if(!hasChokeAndInterestedMessages) {
+                // Send out a queued choke or unchoke message
+                byte[] chokeOrUnchokeMessage = peerConnection.chokeAndInterestedMessages.remove();
+                try {
+                    if(peerConnection.socket.isClosed()) {
+                        break;
+                    }
+                    sendMessage(chokeOrUnchokeMessage);
+                    peerProcess.printDebug("Sent message to peer (choke or unchoke)");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
             //Check for conditions to send outstanding request
-            if(!hasOutstandingRequest && peerHasAnyPiecesWeDont) {
+            else if(!hasOutstandingRequest && peerHasAnyPiecesWeDont) {
                 //This branch means that if there are any pieces that the peer has that this peer doesn't have, request one of them
                 //This branch should only be taken if there is not already an outstanding request
                 List<Integer> eligiblePieces = new ArrayList<>();
@@ -111,6 +140,17 @@ public class SendHandler extends Thread {
                 peerConnection.currentlyRequestedPiece.set(-1);
             }
             else if (hasAllPieces && peerHasAllPieces){
+                // Send not interested message if both peers have all pieces
+                if(!sentHasBothNotInterested) {
+                    byte[] notInterestedMessage = Message.generateNotInterestedMessage();
+                    try {
+                        sendMessage(notInterestedMessage);
+                        peerProcess.printDebug("Sent message to peer (not interested)");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    sentHasBothNotInterested = true;
+                }
                 //if both peers have all pieces, check to see if all peers have all pieces
                 // and if so, close the connection
                 boolean allPeersHaveWholeFile = true;
@@ -155,9 +195,33 @@ public class SendHandler extends Thread {
     }
     void sendMessage(byte[] msg) throws IOException{
         //stream write the message
-        peerConnection.out.write(msg);
-        peerConnection.out.flush();
+        lastMessageTime = Instant.now();
+        if(peerConnection.socket.isClosed() || peerConnection.out == null) {
+            return;
+        }
 
+        try {
+            peerConnection.out.write(msg);
+            peerConnection.out.flush();
+        } catch (SocketException e) {
+            //e.printStackTrace();
+            //The socket is closed, so don't do anything
+        }
+
+
+    }
+
+    public void selectPreferredNeighbors(int k) {
+        // Calculate downloading rates from neighbors
+        // Identify interested neighbors
+        // Select k neighbors with highest downloading rates
+        // Send 'unchoke' messages to preferred neighbors
+        // Send 'choke' messages to unselected neighbors
+    }
+
+    public void selectOptimisticallyUnchokedNeighbor() {
+        // Reselect optimistically unchoked neighbor
+        // Send 'unchoke' message to optimistically unchoked neighbor
     }
 
 }
