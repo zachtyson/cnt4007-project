@@ -142,11 +142,7 @@ public class ReceiveHandler extends Thread{
                             if(!previousValue) {
                                 peerConnection.hostProcess.logger.logCompletion();
                                 byte[] bitmapMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
-                                peerConnection.chokeAndInterestedMessages.add(bitmapMessage);
-                                try{
-                                    Thread.sleep(5000);
-                                } catch (InterruptedException e) {
-                                }
+                                peerConnection.sendResponses.add(bitmapMessage);
                             }
                         }
                     }
