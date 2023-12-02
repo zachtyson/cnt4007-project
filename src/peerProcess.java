@@ -134,7 +134,7 @@ public class peerProcess {
         while (activeConnections.get() > 0) {
             // Optionally, you can add a sleep to avoid busy waiting
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 printError("Interrupted while waiting for connections to close");

@@ -1,13 +1,16 @@
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 //ReceiveHandler is in charge of receiving messages from the peer, and passing them to the host process
 //and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
 public class ReceiveHandler extends Thread{
     PeerConnection peerConnection;
+    ArrayList<PeerConnection> interestedNeighbors = new ArrayList<PeerConnection>();
     ReceiveHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
     }
@@ -66,12 +69,14 @@ public class ReceiveHandler extends Thread{
                         peerProcess.printDebug("Received interested message from peer");
                         peerConnection.hostProcess.logger.logReceiveInterested(String.valueOf(peerConnection.peerId));
                         peerConnection.setPeerInterested(true);
+                        interestedNeighbors.add(peerConnection);
                         break;
                     case notInterested:
                         //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
                         peerConnection.hostProcess.logger.logReceiveNotInterested(String.valueOf(peerConnection.peerId));
                         peerConnection.setPeerInterested(false);
+                        interestedNeighbors.remove(peerConnection);
                         break;
                     case have:
                         peerProcess.printDebug("Received have message from peer");

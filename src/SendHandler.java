@@ -217,16 +217,12 @@ public class SendHandler extends Thread {
 
 
         // 2. Identify interested neighbors
-        List<PeerConnection> interestedNeighbors = new ArrayList<>();
-        for (PeerConnection neighbor : neighbors) {
-            if (neighbor.peerInterested.get()) {
-                interestedNeighbors.add(neighbor);
-            }
-        }
+        ArrayList<PeerConnection> interestedNeighbors = peerConnection.receiveHandler.interestedNeighbors.clone();
+
 
         // 3. Select k neighbors with highest downloading rates
             //for loop through all neighbors and get the highest downloading rates
-            
+        while()
             //THE GET DOWNLOAD RATE IS INCORRECT IN LINE 231. FIX IT SO ITS THE CORRECT IN OUR CODE
             Collections.sort(interestedNeighbors, Comparator.comparingInt(PeerConnection::getDownloadRate).reversed());
             int howManyChosen = 0;
