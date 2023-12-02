@@ -211,7 +211,7 @@ public class SendHandler extends Thread {
 
     }
 
-    public void selectPreferredNeighbors(int k) {
+    public void selectPreferredNeighbors(int k) { //k is how many are to be selected
         // Calculate downloading rates from neighbors
             //in a method in PeerConnection
         // Identify interested neighbors
@@ -220,7 +220,7 @@ public class SendHandler extends Thread {
             //for loop through all neighbors and get the highest downloading rates
             int highestDownloadRate = 0;
             int howManyChosen = 0;
-            while(howManyChosen < 7){
+            while(howManyChosen < k){
                 
             }
         // Send 'unchoke' messages to preferred neighbors
