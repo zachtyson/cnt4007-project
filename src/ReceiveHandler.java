@@ -10,7 +10,7 @@ import java.util.Map;
 //and this happens by modifying the PeerConnection object's ConcurrentHashMap of byte[] and status enum
 public class ReceiveHandler extends Thread{
     PeerConnection peerConnection;
-    ArrayList<PeerConnection> interestedNeighbors = new ArrayList<PeerConnection>();
+
     ReceiveHandler(PeerConnection peerConnection) {
         this.peerConnection = peerConnection;
     }
@@ -69,14 +69,14 @@ public class ReceiveHandler extends Thread{
                         peerProcess.printDebug("Received interested message from peer");
                         peerConnection.hostProcess.logger.logReceiveInterested(String.valueOf(peerConnection.peerId));
                         peerConnection.setPeerInterested(true);
-                        interestedNeighbors.add(peerConnection);
+                        peerConnection.hostProcess.interestedNeighbors.add(peerConnection);
                         break;
                     case notInterested:
                         //todo: implement not interested
                         peerProcess.printDebug("Received not interested message from peer");
                         peerConnection.hostProcess.logger.logReceiveNotInterested(String.valueOf(peerConnection.peerId));
                         peerConnection.setPeerInterested(false);
-                        interestedNeighbors.remove(peerConnection);
+                        peerConnection.hostProcess.interestedNeighbors.remove(peerConnection);
                         break;
                     case have:
                         peerProcess.printDebug("Received have message from peer");

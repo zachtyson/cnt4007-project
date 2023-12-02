@@ -210,56 +210,5 @@ public class SendHandler extends Thread {
 
 
     }
-    ArrayList<PeerConnection> chokedNeighbors = new ArrayList<PeerConnection>();
-    public void selectPreferredNeighbors(int k) { //k is how many are to be selected
-        // 1. Calculate downloading rates from neighbors
-            //in a method in PeerConnection
-
-
-        // 2. Identify interested neighbors
-        ArrayList<PeerConnection> interestedNeighbors = (ArrayList<PeerConnection>) peerConnection.receiveHandler.interestedNeighbors.clone();
-        chokedNeighbors.clear();
-
-        // 3. Select k neighbors with highest downloading rates
-            //for loop through all neighbors and get the highest downloading rates
-        while(interestedNeighbors.size()>k){
-            PeerConnection min = null;
-            for (PeerConnection x : interestedNeighbors){
-                if (min != null){
-
-                    if (min.downloadRate.get()  >x.downloadRate.get()){
-                        min = x;
-                    }
-                }else{
-                    min = x;
-                }
-            }
-            chokedNeighbors.add(min);
-            interestedNeighbors.remove(min);
-        }
-            for (PeerConnection selectedNeighbor : interestedNeighbors) {
-
-                    // Step 4: Send 'unchoke' messages to preferred neighbors
-                    selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
-            }
-        // Step 5: Send 'choke' messages to unselected neighbors
-            for (PeerConnection Choking : chokedNeighbors){
-                Choking.sendResponses.add(Message.generateChokeMessage());
-            }
-
-        // 4. Send 'unchoke' messages to preferred neighbors
-
-        // 5. Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
-        //selected as preferred neighbors at this time should be choked unless it is an optimistically
-        //unchoked neighbor
-
-    }
-
-    public void selectOptimisticallyUnchokedNeighbor() {
-        int index = (int) Math.random() * chokedNeighbors.size();
-        PeerConnection unchoke =  chokedNeighbors.get(index);
-        unchoke.sendResponses.add(Message.generateUnchokeMessage());
-
-    }
 
 }

@@ -2,10 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +33,8 @@ public class peerProcess {
     // TODO: Make some notes and comments on other implementations
 
     private CopyOnWriteArrayList<Integer> unchokedPeers;
-
+    ArrayList<PeerConnection> interestedNeighbors=null;
+    ArrayList<PeerConnection> chokedNeighbors=null;
 
     //Notes for choking / unchoking
     // k = number of preferred neighbors, Commoncfg.numberOfPreferredNeighbors,
@@ -108,6 +106,8 @@ public class peerProcess {
 
     public peerProcess(int currentPeerID) {
         // Reads Common.cfg and PeerInfo.cfg
+        chokedNeighbors = new ArrayList<PeerConnection>();
+        interestedNeighbors = new ArrayList<PeerConnection>();
         this.unchokedPeers = new CopyOnWriteArrayList<>();
         try {
             getCommon();
@@ -232,6 +232,7 @@ public class peerProcess {
                     printDebug("Connected to " + socket.getRemoteSocketAddress());
                     int peerId = PeerConnection.peerHandshakeServerSocket(socket, this.hostProcess.selfPeerId);
                     boolean found = false;
+
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.setSocket(socket);
@@ -488,6 +489,58 @@ public class peerProcess {
             String timestamp = java.time.LocalTime.now().toString();
             System.out.println(timestamp + " Debug: " + message);
         }
+    }
+
+
+    public void selectPreferredNeighbors(int k) { //k is how many are to be selected
+        // 1. Calculate downloading rates from neighbors
+        //in a method in PeerConnection
+
+
+        // 2. Identify interested neighbors
+        ArrayList<PeerConnection> tinterestedNeighbors = (ArrayList<PeerConnection>) interestedNeighbors.clone();
+        chokedNeighbors.clear();
+
+        // 3. Select k neighbors with highest downloading rates
+        //for loop through all neighbors and get the highest downloading rates
+        while(tinterestedNeighbors.size()>k){
+            PeerConnection min = null;
+            for (PeerConnection x : tinterestedNeighbors){
+                if (min != null){
+
+                    if (min.downloadRate.get()  >x.downloadRate.get()){
+                        min = x;
+                    }
+                }else{
+                    min = x;
+                }
+            }
+            chokedNeighbors.add(min);
+            tinterestedNeighbors.remove(min);
+        }
+        for (PeerConnection selectedNeighbor : tinterestedNeighbors) {
+
+            // Step 4: Send 'unchoke' messages to preferred neighbors
+            selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
+        }
+        // Step 5: Send 'choke' messages to unselected neighbors
+        for (PeerConnection Choking : chokedNeighbors){
+            Choking.sendResponses.add(Message.generateChokeMessage());
+        }
+
+        // 4. Send 'unchoke' messages to preferred neighbors
+
+        // 5. Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
+        //selected as preferred neighbors at this time should be choked unless it is an optimistically
+        //unchoked neighbor
+
+    }
+
+    public void selectOptimisticallyUnchokedNeighbor() {
+        int index = (int) Math.random() * chokedNeighbors.size();
+        PeerConnection unchoke =  chokedNeighbors.get(index);
+        unchoke.sendResponses.add(Message.generateUnchokeMessage());
+
     }
 
 }
