@@ -212,20 +212,26 @@ public class SendHandler extends Thread {
     }
 
     public void selectPreferredNeighbors(int k) { //k is how many are to be selected
-        // Calculate downloading rates from neighbors
+        // 1. Calculate downloading rates from neighbors
             //in a method in PeerConnection
-        // Identify interested neighbors
+        // 2. Identify interested neighbors
+        List<PeerConnection> interestedNeighbors = new ArrayList<>();
+        for (PeerConnection neighbor : neighbors) {
+            if (neighbor.peerInterested.get()) {
+                interestedNeighbors.add(neighbor);
+            }
+        }
 
-        // Select k neighbors with highest downloading rates
+        // 3. Select k neighbors with highest downloading rates
             //for loop through all neighbors and get the highest downloading rates
             int highestDownloadRate = 0;
             int howManyChosen = 0;
             while(howManyChosen < k){
                 
             }
-        // Send 'unchoke' messages to preferred neighbors
+        // 4. Send 'unchoke' messages to preferred neighbors
 
-        // Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
+        // 5. Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
         //selected as preferred neighbors at this time should be choked unless it is an optimistically
         //unchoked neighbor
 
