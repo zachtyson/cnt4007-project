@@ -61,8 +61,6 @@ public class peerProcess {
 
     //Intended behavior:
 
-
-
     public void addUnchokedPeer(int peerId) {
         // Add a peer to the list of unchoked peers
         if (!unchokedPeers.contains(peerId)) {

@@ -227,7 +227,9 @@ public class SendHandler extends Thread {
 
     public void selectOptimisticallyUnchokedNeighbor() {
         // Reselect optimistically unchoked neighbor
-            
+            CopyOnWriteArrayList temp = getUnchokedPeers;
+            //gets an array of the unchoked peers
+
         // Send 'unchoke' message to optimistically unchoked neighbor
     }
 
