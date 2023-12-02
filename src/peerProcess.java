@@ -133,11 +133,6 @@ public class peerProcess {
         }
         printDebug("All peers terminated");
         String fileName = commonCfg.fileName;
-        try {
-            byteMapToFile(pieceData, fileName);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
         while (activeConnections.get() > 0) {
             // Optionally, you can add a sleep to avoid busy waiting
             try {
@@ -158,7 +153,7 @@ public class peerProcess {
 
     }
 
-    public static void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String filePath) throws IOException {
+    public void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String filePath) throws IOException {
         // todo: there is 100% a bug here
         // todo: CORRECTION: it is not here, there is a big with sending/receiving pieces, not sure which
         // because peers that start with thefile don't have the bug but peers that start without the file (and receive it) do
