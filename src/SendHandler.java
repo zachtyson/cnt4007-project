@@ -210,32 +210,43 @@ public class SendHandler extends Thread {
 
 
     }
-
+    ArrayList<PeerConnection> chokedNeighbors = new ArrayList<PeerConnection>();
     public void selectPreferredNeighbors(int k) { //k is how many are to be selected
         // 1. Calculate downloading rates from neighbors
             //in a method in PeerConnection
 
 
         // 2. Identify interested neighbors
-        ArrayList<PeerConnection> interestedNeighbors = peerConnection.receiveHandler.interestedNeighbors.clone();
-
+        ArrayList<PeerConnection> interestedNeighbors = (ArrayList<PeerConnection>) peerConnection.receiveHandler.interestedNeighbors.clone();
+        chokedNeighbors.clear();
 
         // 3. Select k neighbors with highest downloading rates
             //for loop through all neighbors and get the highest downloading rates
-        while()
-            //THE GET DOWNLOAD RATE IS INCORRECT IN LINE 231. FIX IT SO ITS THE CORRECT IN OUR CODE
-            Collections.sort(interestedNeighbors, Comparator.comparingInt(PeerConnection::getDownloadRate).reversed());
-            int howManyChosen = 0;
-            for (PeerConnection selectedNeighbor : interestedNeighbors) {
-                if (howManyChosen < k) {
-                    // Step 4: Send 'unchoke' messages to preferred neighbors
-                    selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
-                    howManyChosen++;
-                } else {
-                    // Step 5: Send 'choke' messages to unselected neighbors
-                    selectedNeighbor.sendResponses.add(Message.generateChokeMessage());
+        while(interestedNeighbors.size()>k){
+            PeerConnection min = null;
+            for (PeerConnection x : interestedNeighbors){
+                if (min != null){
+
+                    if (min.downloadRate.get()  >x.downloadRate.get()){
+                        min = x;
+                    }
+                }else{
+                    min = x;
                 }
             }
+            chokedNeighbors.add(min);
+            interestedNeighbors.remove(min);
+        }
+            for (PeerConnection selectedNeighbor : interestedNeighbors) {
+
+                    // Step 4: Send 'unchoke' messages to preferred neighbors
+                    selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
+            }
+        // Step 5: Send 'choke' messages to unselected neighbors
+            for (PeerConnection Choking : chokedNeighbors){
+                Choking.sendResponses.add(Message.generateChokeMessage());
+            }
+
         // 4. Send 'unchoke' messages to preferred neighbors
 
         // 5. Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
@@ -245,11 +256,10 @@ public class SendHandler extends Thread {
     }
 
     public void selectOptimisticallyUnchokedNeighbor() {
-        // Reselect optimistically unchoked neighbor
-            CopyOnWriteArrayList temp = getUnchokedPeers;
-            //gets an array of the unchoked peers
+        int index = (int) Math.random() * chokedNeighbors.size();
+        PeerConnection unchoke =  chokedNeighbors.get(index);
+        unchoke.sendResponses.add(Message.generateUnchokeMessage());
 
-        // Send 'unchoke' message to optimistically unchoked neighbor
     }
 
 }
