@@ -277,7 +277,9 @@ are set to zero. Peers that don’t have anything yet may skip a ‘bitfield’ 
                 interpretation.pieceIndex = ByteBuffer.wrap(payload, 5, 4).getInt();
                 interpretation.messagePayload = new byte[payloadLength - 4];
                 System.arraycopy(payload, 9, interpretation.messagePayload, 0, payloadLength - 4);
-                break;
+                interpretation.payloadLength = payloadLength - 4;
+                // return here since everything below doesn't apply to piece messages
+                return interpretation;
             default:
                 printError("Invalid message type");
                 msgMisinterpreter(payload);
