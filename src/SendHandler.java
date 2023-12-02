@@ -217,7 +217,7 @@ public class SendHandler extends Thread {
         // Identify interested neighbors
 
         // Select k neighbors with highest downloading rates
-            //for loop through all neighbows and get the highest downloading rates
+            //for loop through all neighbors and get the highest downloading rates
             int highestDownloadRate = 0;
             int howManyChosen = 0;
             while(howManyChosen < 7){
@@ -225,7 +225,9 @@ public class SendHandler extends Thread {
             }
         // Send 'unchoke' messages to preferred neighbors
 
-        // Send 'choke' messages to unselected neighbors
+        // Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
+        //selected as preferred neighbors at this time should be choked unless it is an optimistically
+        //unchoked neighbor
 
     }
 
