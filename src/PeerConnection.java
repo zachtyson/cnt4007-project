@@ -33,7 +33,7 @@ public class PeerConnection extends Thread {
     //Meaning you can request piece 1 from peer A and piece 2 from peer B at the same time, but you can't request piece 1 from peer A and piece 2 from peer A at the same time
     AtomicBoolean peerInterested = new AtomicBoolean(false); //If peer is interested in us
     AtomicBoolean selfInterested = new AtomicBoolean(false); //If we are interested in peer
-    AtomicBoolean selfChoked = new AtomicBoolean(false); //If we are choked
+    public AtomicBoolean selfChoked = new AtomicBoolean(false); //If we are choked
     ConcurrentMap<LocalDateTime,Integer> messageBytesReceived = new ConcurrentHashMap<>(); //Used to keep track of how many bytes we've received from this specific peer
     public final int oldestMessageToKeepInSeconds; //Used to keep track of how many seconds to keep messages in the messageBytesReceived map
     AtomicReference<Double> downloadRate = new AtomicReference<>(0.0); //Used to keep track of the download rate of this specific peer
@@ -348,5 +348,7 @@ public class PeerConnection extends Thread {
         }
         selfChoked.set(status);
     }
-
+    public boolean getSelfChoked(){
+        return selfChoked.get();
+    }
 }

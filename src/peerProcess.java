@@ -131,12 +131,26 @@ public class peerProcess {
         }
         printDebug("All peers terminated");
         String fileName = commonCfg.fileName;
+        Timer t1 = new Timer();
+        Timer t2 = new Timer();
+        t1.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                selectPreferredNeighbors(commonCfg.numberOfPreferredNeighbors);
+            }
+        },commonCfg.unchokingInterval*1000);
+        t2.schedule(new TimerTask() {
+            @Override
+            public void run() {
+
+            }
+        },commonCfg.optimisticUnchokingInterval*1000);
         while (activeConnections.get() > 0) {
             // Optionally, you can add a sleep to avoid busy waiting
-            try {
 
-                Thread.sleep(commonCfg.unchokingInterval*1000);
-                selectPreferredNeighbors(commonCfg.numberOfPreferredNeighbors);
+            try {
+               Thread.sleep(1000);
+                printDebug("Active Connections "+activeConnections.get());
 
 
             } catch (InterruptedException e) {
@@ -145,6 +159,9 @@ public class peerProcess {
             }
         }
         logger.logShutdown();
+        //stopping those tasks from running
+        t1.cancel();
+        t2.cancel();
         try {
             byteMapToFile(pieceData, fileName);
         } catch (IOException e) {
