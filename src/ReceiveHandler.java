@@ -52,31 +52,7 @@ public class ReceiveHandler extends Thread{
 //                        }
 //                    }
 //                }
-                if (peerConnection.selfChoked.get()) {
-                    switch (interpretation.Msg) { //look at labels for choke and unchoke.
-                        //do whatever it says to do when it is choked or unchoked
-                        case choke:
-                            //todo: implement choke
-                            //choke means that you can't request pieces from the peer
-                            peerProcess.printDebug("Received choke message from peer");
-                            //implementation here
-                            //stop sending requests to this peer
-                            peerConnection.setSelfChoked(true);
-                            break;
-                        case unchoke:
-                            //todo: implement unchoke
-                            //unchoke means that you can request pieces from the peer again
-                            peerProcess.printDebug("Received unchoke message from peer");
-                            //implementation here
-                            //start sending requests to this peer
-                            peerConnection.setSelfChoked(false);
 
-                            break;
-                        default:
-                            System.out.println("Received message from peer while choked");
-                            break;
-                    }
-                } else {
                     switch (interpretation.Msg) { //look at labels for choke and unchoke.
                         //do whatever it says to do when it is choked or unchoked
                         case choke:
@@ -228,16 +204,17 @@ public class ReceiveHandler extends Thread{
                             System.out.println("Received unknown message from peer");
                             break;
                     }
-                }
+
                 } catch(IOException e){
                     //e.printStackTrace();
                     //peerProcess.printError("Connection closed");
                     //peerProcess.printError("Peer+ " + peerConnection.hostProcess.selfPeerId +" Connection closed");
                     peerConnection.close();
                     break;
+
                 }
 
-            }
+        }
 
         //peerConnection.hostProcess.logger.logShutdown();
     }
