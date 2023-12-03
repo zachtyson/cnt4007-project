@@ -112,7 +112,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
             activeThreads++;
         }
     }
-    System.out.println(activeThreads);
+    //System.out.println(activeThreads);
     return !(activeThreads==0);
 }
     public peerProcess(int currentPeerID) {
@@ -153,7 +153,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
         t2.schedule(new TimerTask() {
             @Override
             public void run() {
-
+                selectOptimisticallyUnchokedNeighbor();
             }
         },commonCfg.optimisticUnchokingInterval*1000);
         while (hasActiveThreads(childThreads)) {
@@ -552,11 +552,14 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
             chokedNeighbors.add(min);
             tinterestedNeighbors.remove(min);
         }
+        Vector<String> loggedNeighbors = new Vector<>();
         for (PeerConnection selectedNeighbor : tinterestedNeighbors) {
 
             // Step 4: Send 'unchoke' messages to preferred neighbors
             selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
+            loggedNeighbors.add(selectedNeighbor.peerAddress);
         }
+        logger.logChangePreferredNeighbors(loggedNeighbors);
         // Step 5: Send 'choke' messages to unselected neighbors
         for (PeerConnection Choking : chokedNeighbors){
             Choking.sendResponses.add(Message.generateChokeMessage());
@@ -573,6 +576,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
     public void selectOptimisticallyUnchokedNeighbor() {
         int index = (int) Math.random() * chokedNeighbors.size();
         PeerConnection unchoke =  chokedNeighbors.get(index);
+        logger.logChangeOptimisticallyUnchokedNeighbor(unchoke.peerAddress);
         unchoke.sendResponses.add(Message.generateUnchokeMessage());
 
     }

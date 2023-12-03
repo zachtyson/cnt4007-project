@@ -62,6 +62,7 @@ public class ReceiveHandler extends Thread{
                             //implementation here
                             //stop sending requests to this peer
                             peerConnection.setSelfChoked(true);
+                            peerConnection.hostProcess.logger.logChoking((""+peerConnection.peerPort+""));
                             break;
                         case unchoke:
                             //todo: implement unchoke
@@ -69,6 +70,7 @@ public class ReceiveHandler extends Thread{
                             peerProcess.printDebug("Received unchoke message from peer");
                             //implementation here
                             //start sending requests to this peer
+                            peerConnection.hostProcess.logger.logUnchoking((""+peerConnection.peerPort+""));
                             peerConnection.setSelfChoked(false);
 
                             break;

@@ -73,6 +73,7 @@ public class SendHandler extends Thread {
                     }
                     sendMessage(chokeOrUnchokeMessage);
                     peerProcess.printDebug("Sent message to peer (choke or unchoke)");
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
