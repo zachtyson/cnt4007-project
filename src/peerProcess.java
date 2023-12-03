@@ -2,10 +2,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,7 +33,8 @@ public class peerProcess {
     // TODO: Make some notes and comments on other implementations
 
     private CopyOnWriteArrayList<Integer> unchokedPeers;
-
+    ArrayList<PeerConnection> interestedNeighbors=null;
+    ArrayList<PeerConnection> chokedNeighbors=null;
 
     //Notes for choking / unchoking
     // k = number of preferred neighbors, Commoncfg.numberOfPreferredNeighbors,
@@ -59,9 +57,9 @@ public class peerProcess {
     // When this happens, send unchoke to the optimistically unchoked neighbor, and I guess just kick out the old optimistically unchoked neighbor(?)
 
 
+
+
     //Intended behavior:
-
-
 
     public void addUnchokedPeer(int peerId) {
         // Add a peer to the list of unchoked peers
@@ -79,7 +77,7 @@ public class peerProcess {
         // Get a snapshot of the current unchoked peers
         return new CopyOnWriteArrayList<>(unchokedPeers);
     }
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = false;
     Vector<Thread> childThreads = new Vector<>();
 
     public static void main(String[] args) {
@@ -107,20 +105,21 @@ public class peerProcess {
     }
 
     public PeerLogger logger;
-
-    boolean hasActiveThreads(Vector<Thread> childThreads) {
-        int activeThreads = 0;
-        for (Thread thread : childThreads) {
-            if (thread.isAlive()) {
-                activeThreads++;
-            }
+boolean hasActiveThreads(Vector<Thread> childThreads){
+    int activeThreads = 0;
+    for (Thread thread: childThreads){
+        if(thread.isAlive()){
+            activeThreads++;
+            //System.out.println(thread);
         }
-        return !(activeThreads == 0);
     }
-
-
+    //System.out.println(activeThreads);
+    return !(activeThreads==0);
+}
     public peerProcess(int currentPeerID) {
         // Reads Common.cfg and PeerInfo.cfg
+        chokedNeighbors = new ArrayList<PeerConnection>();
+        interestedNeighbors = new ArrayList<PeerConnection>();
         this.unchokedPeers = new CopyOnWriteArrayList<>();
         try {
             getCommon();
@@ -144,16 +143,47 @@ public class peerProcess {
         }
         printDebug("All peers terminated");
         String fileName = commonCfg.fileName;
+        Timer t1 = new Timer();
+        Timer t2 = new Timer();
+        t1.schedule(new TimerTask() {
+            @Override
+            public void run() {
+
+                try {
+                    Thread.sleep(10);
+
+                    selectPreferredNeighbors(commonCfg.numberOfPreferredNeighbors);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+
+            }
+        },commonCfg.unchokingInterval*1000,commonCfg.unchokingInterval*1000);
+        t2.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                selectOptimisticallyUnchokedNeighbor();
+            }
+
+        },commonCfg.optimisticUnchokingInterval*1000,commonCfg.optimisticUnchokingInterval*1000);
         while (hasActiveThreads(childThreads)) {
             // Optionally, you can add a sleep to avoid busy waiting
+
             try {
-                Thread.sleep(100);
+               Thread.sleep(100);
+
+
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 printError("Interrupted while waiting for connections to close");
             }
         }
         logger.logShutdown();
+        //stopping those tasks from running
+        t1.cancel();
+        t2.cancel();
         try {
             byteMapToFile(pieceData, fileName);
         } catch (IOException e) {
@@ -245,6 +275,7 @@ public class peerProcess {
                     printDebug("Connected to " + socket.getRemoteSocketAddress());
                     int peerId = PeerConnection.peerHandshakeServerSocket(socket, this.hostProcess.selfPeerId);
                     boolean found = false;
+
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.setSocket(socket);
@@ -500,6 +531,75 @@ public class peerProcess {
         if(DEBUG) {
             String timestamp = java.time.LocalTime.now().toString();
             System.out.println(timestamp + " Debug: " + message);
+        }
+    }
+
+
+    public void selectPreferredNeighbors(int k) { //k is how many are to be selected
+        // 1. Calculate downloading rates from neighbors
+        //in a method in PeerConnection
+        choked = 0;
+
+        // 2. Identify interested neighbors
+        ArrayList<PeerConnection> tinterestedNeighbors = (ArrayList<PeerConnection>) interestedNeighbors.clone();
+        chokedNeighbors.clear();
+
+        // 3. Select k neighbors with highest downloading rates
+        //for loop through all neighbors and get the highest downloading rates
+        while(tinterestedNeighbors.size()>k){
+            PeerConnection min = null;
+            for (PeerConnection x : tinterestedNeighbors){
+                if (min != null){
+
+                    if (min.downloadRate.get()  >x.downloadRate.get()){
+                        min = x;
+                    }else if(min.downloadRate.get() == x.downloadRate.get()){
+                        min= x;
+                    }
+                }else{
+                    min = x;
+                }
+            }
+            chokedNeighbors.add(min);
+            choked++;
+            tinterestedNeighbors.remove(min);
+        }
+        Vector<String> loggedNeighbors = new Vector<>();
+        for (PeerConnection selectedNeighbor : tinterestedNeighbors) {
+
+            // Step 4: Send 'unchoke' messages to preferred neighbors
+            selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
+            loggedNeighbors.add(selectedNeighbor.peerId+"");
+        }
+        logger.logChangePreferredNeighbors(loggedNeighbors);
+        // Step 5: Send 'choke' messages to unselected neighbors
+        for (PeerConnection Choking : chokedNeighbors){
+            Choking.sendResponses.add(Message.generateChokeMessage());
+        }
+
+        // 4. Send 'unchoke' messages to preferred neighbors
+
+        // 5. Send 'choke' messages to unselected neighbors. All other neighbors previously unchoked but not
+        //selected as preferred neighbors at this time should be choked unless it is an optimistically
+        //unchoked neighbor
+
+    }
+    int choked= 0;
+    public void selectOptimisticallyUnchokedNeighbor() {
+        int index = (int) ((interestedNeighbors.size()-1 - commonCfg.numberOfPreferredNeighbors)*Math.random());
+
+
+        if (index < 0 ){
+            index = 0;
+        }
+        if (index>chokedNeighbors.size()){
+            index = chokedNeighbors.size()-1;
+        }
+        if (index!=chokedNeighbors.size()) {
+            //System.out.println("Index" + index);
+            PeerConnection unchoke = chokedNeighbors.get(index);
+            logger.logChangeOptimisticallyUnchokedNeighbor(unchoke.peerId + "" + index);
+            unchoke.sendResponses.add(Message.generateUnchokeMessage());
         }
     }
 

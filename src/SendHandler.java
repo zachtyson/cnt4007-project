@@ -73,6 +73,7 @@ public class SendHandler extends Thread {
                     }
                     sendMessage(chokeOrUnchokeMessage);
                     peerProcess.printDebug("Sent message to peer (choke or unchoke)");
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -120,7 +121,7 @@ public class SendHandler extends Thread {
                     e.printStackTrace();
                 }
             }
-            else if (hasOutstandingRequest) {
+            else if ((!peerConnection.getSelfChoked())&&hasOutstandingRequest) {
                 // Send out the outstanding request
                 peerProcess.printDebug("Sending request message");
                 int pieceIndex = peerConnection.currentlyRequestedPiece.get();
@@ -209,26 +210,6 @@ public class SendHandler extends Thread {
         }
 
 
-    }
-
-    public void selectPreferredNeighbors(int k) {
-        // Calculate downloading rates from neighbors
-            //in a method in PeerConnection
-        // Identify interested neighbors
-
-        // Select k neighbors with highest downloading rates
-            //for loop through all neighbows and get the highest downloading rates
-            int highestDownloadRate = 0;
-        // Send 'unchoke' messages to preferred neighbors
-
-        // Send 'choke' messages to unselected neighbors
-
-    }
-
-    public void selectOptimisticallyUnchokedNeighbor() {
-        // Reselect optimistically unchoked neighbor
-            
-        // Send 'unchoke' message to optimistically unchoked neighbor
     }
 
 }
