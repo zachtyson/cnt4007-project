@@ -151,30 +151,31 @@ public class ReceiveHandler extends Thread{
                             byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
                             peerProcess.printDebug("Sending message that piece " + pieceIndex + " has been received");
                             //peerConnection.sendResponses.add(messageToHost); //dont think this is necessary
-                            for (PeerConnection peerConnection : peerConnection.hostProcess.peerConnectionVector) {
-                                peerConnection.sendResponses.add(messageToHost);
+                            for(PeerConnection peerConnectionp: peerConnection.hostProcess.peerConnectionVector) {
+                                peerConnectionp.sendResponses.add(messageToHost);
                             }
                             //Put messageToHost in the front of the queue
 
                             boolean hasAllPiecesAfterReceieve = true;
-                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
-                                if (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                            for(int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                if(peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
                                     hasAllPiecesAfterReceieve = false;
                                     break;
                                 }
                             }
                             //TODO: THIS IS A HACKY WAY TO DO THIS, FIX THIS LATER
-                            System.out.println("I have all the pieces! " + peerConnection.hostProcess.selfPeerId);
+                        {
                             if (hasAllPiecesAfterReceieve) {
                                 boolean previousValue = peerConnection.hostProcess.hasAllPieces.getAndSet(true);
                                 if (!previousValue) {
                                     peerConnection.hostProcess.logger.logCompletion();
                                     byte[] bitmapMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
-                                    peerConnection.sendResponses.add(bitmapMessage);
+                                    for (PeerConnection peerConnectionp : peerConnection.hostProcess.peerConnectionVector) {
+                                        peerConnectionp.sendResponses.add(bitmapMessage);
+                                    }
                                 }
                             }
-
-
+                        }
                             break;
                         case bitfield:
                             peerProcess.printDebug("Received bitfield message from peer");
