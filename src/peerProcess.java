@@ -134,7 +134,11 @@ public class peerProcess {
         while (activeConnections.get() > 0) {
             // Optionally, you can add a sleep to avoid busy waiting
             try {
-                Thread.sleep(1000);
+
+                Thread.sleep(commonCfg.unchokingInterval*1000);
+                selectPreferredNeighbors(commonCfg.numberOfPreferredNeighbors);
+
+
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 printError("Interrupted while waiting for connections to close");
