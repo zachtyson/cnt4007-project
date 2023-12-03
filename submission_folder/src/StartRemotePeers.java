@@ -63,12 +63,12 @@ public class StartRemotePeers {
             }
             copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg");
             copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg");
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "peerProcess.java");
+            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "submission_folder/src/peerProcess.java");
             if(peerInfo.hasFileOnStart) {
                 copyFile(path, peerFolderFile.getAbsolutePath(), "thefile");
             }
             try {
-                ProcessBuilder compilePeerProcess = new ProcessBuilder("javac","peerProcess.java");
+                ProcessBuilder compilePeerProcess = new ProcessBuilder("javac", "submission_folder/src/peerProcess.java");
                 compilePeerProcess.directory(new File(peerFolderFile.getAbsolutePath()));
                 compilePeerProcess.start().waitFor();
             }
