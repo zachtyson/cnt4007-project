@@ -64,11 +64,6 @@ public class StartRemotePeers {
             copyFile(path, peerFolderFile.getAbsolutePath(), "Common.cfg");
             copyFile(path, peerFolderFile.getAbsolutePath(), "PeerInfo.cfg");
             copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "peerProcess.java");
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "Message.java");
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "SendHandler.java");
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "ReceiveHandler.java");
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "PeerConnection.java");
-            copyFile(path+"/src", peerFolderFile.getAbsolutePath(), "PeerLogger.java");
             if(peerInfo.hasFileOnStart) {
                 copyFile(path, peerFolderFile.getAbsolutePath(), "thefile");
             }
@@ -76,11 +71,6 @@ public class StartRemotePeers {
                 ProcessBuilder compilePeerProcess = new ProcessBuilder("javac","peerProcess.java");
                 compilePeerProcess.directory(new File(peerFolderFile.getAbsolutePath()));
                 compilePeerProcess.start().waitFor();
-
-                ProcessBuilder compileMessage = new ProcessBuilder("javac","Message.java");
-                compileMessage.directory(new File(peerFolderFile.getAbsolutePath()));
-                compileMessage.start().waitFor();
-
             }
             catch (Exception ex) {
                 System.out.println(ex.toString());
