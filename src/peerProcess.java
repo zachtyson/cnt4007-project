@@ -110,6 +110,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
     for (Thread thread: childThreads){
         if(thread.isAlive()){
             activeThreads++;
+            //System.out.println(thread);
         }
     }
     //System.out.println(activeThreads);
@@ -147,15 +148,25 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
         t1.schedule(new TimerTask() {
             @Override
             public void run() {
-                selectPreferredNeighbors(commonCfg.numberOfPreferredNeighbors);
+
+                try {
+                    Thread.sleep(10);
+
+                    selectPreferredNeighbors(commonCfg.numberOfPreferredNeighbors);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+
             }
-        },commonCfg.unchokingInterval*1000);
+        },commonCfg.unchokingInterval*1000,commonCfg.unchokingInterval*1000);
         t2.schedule(new TimerTask() {
             @Override
             public void run() {
                 selectOptimisticallyUnchokedNeighbor();
             }
-        },commonCfg.optimisticUnchokingInterval*1000);
+
+        },commonCfg.optimisticUnchokingInterval*1000,commonCfg.optimisticUnchokingInterval*1000);
         while (hasActiveThreads(childThreads)) {
             // Optionally, you can add a sleep to avoid busy waiting
 
@@ -527,7 +538,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
     public void selectPreferredNeighbors(int k) { //k is how many are to be selected
         // 1. Calculate downloading rates from neighbors
         //in a method in PeerConnection
-
+        choked = 0;
 
         // 2. Identify interested neighbors
         ArrayList<PeerConnection> tinterestedNeighbors = (ArrayList<PeerConnection>) interestedNeighbors.clone();
@@ -550,6 +561,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
                 }
             }
             chokedNeighbors.add(min);
+            choked++;
             tinterestedNeighbors.remove(min);
         }
         Vector<String> loggedNeighbors = new Vector<>();
@@ -557,7 +569,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
 
             // Step 4: Send 'unchoke' messages to preferred neighbors
             selectedNeighbor.sendResponses.add(Message.generateUnchokeMessage());
-            loggedNeighbors.add(selectedNeighbor.peerAddress);
+            loggedNeighbors.add(selectedNeighbor.peerId+"");
         }
         logger.logChangePreferredNeighbors(loggedNeighbors);
         // Step 5: Send 'choke' messages to unselected neighbors
@@ -572,13 +584,23 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
         //unchoked neighbor
 
     }
-
+    int choked= 0;
     public void selectOptimisticallyUnchokedNeighbor() {
-        int index = (int) Math.random() * chokedNeighbors.size();
-        PeerConnection unchoke =  chokedNeighbors.get(index);
-        logger.logChangeOptimisticallyUnchokedNeighbor(unchoke.peerAddress);
-        unchoke.sendResponses.add(Message.generateUnchokeMessage());
+        int index = (int) ((interestedNeighbors.size()-1 - commonCfg.numberOfPreferredNeighbors)*Math.random());
 
+
+        if (index < 0 ){
+            index = 0;
+        }
+        if (index>chokedNeighbors.size()){
+            index = chokedNeighbors.size()-1;
+        }
+        if (index!=chokedNeighbors.size()) {
+            System.out.println("Index" + index);
+            PeerConnection unchoke = chokedNeighbors.get(index);
+            logger.logChangeOptimisticallyUnchokedNeighbor(unchoke.peerId + "" + index);
+            unchoke.sendResponses.add(Message.generateUnchokeMessage());
+        }
     }
 
 }
