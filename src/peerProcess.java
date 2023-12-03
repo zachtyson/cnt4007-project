@@ -194,13 +194,35 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
 
     }
 
-    public void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String filePath) throws IOException {
+    public void byteMapToFile(ConcurrentHashMap<Integer,byte[]> pieceDataMap, String fileName) throws IOException {
         // todo: there is 100% a bug here
         // todo: CORRECTION: it is not here, there is a big with sending/receiving pieces, not sure which
         // because peers that start with thefile don't have the bug but peers that start without the file (and receive it) do
         // the file size is not correct and is slightly larger than the original file
         // for sake of getting other things working, I'm going to ignore this for now
-        File file = new File(filePath);
+
+        //The file handling method is up to you except each peer should use the corresponding
+        //subdirectory ‘peer_[peerID]’ to contain the complete files or partial files. For example,
+        //if the working directory is ‘~/project/’, then the peer process with peer ID 1001 should
+        //use the subdirectory ‘~/project/peer_1001/’, the peer process with peer ID 1002 should
+        //use the subdirectory ‘~/project/peer_1002/’, and so on. You should maintain the complete
+        //files or partial files for a peer in the corresponding subdirectory.
+        //For those peer processes specified in the file
+        //PeerInfo.cfg that have the complete file,
+        //you need to make sure that the corresponding subdirectories for those peers actually
+        //contain the file before you start them
+
+        // Create the subdirectory path
+        String subdirectoryPath = "peer_" + selfPeerId;
+
+        // Ensure the subdirectory exists
+        File subdirectory = new File(subdirectoryPath);
+        if (!subdirectory.exists()) {
+            subdirectory.mkdir(); // Create the subdirectory if it doesn't exist
+        }
+
+        File file = new File(subdirectoryPath+"/"+fileName);
+
         try (FileOutputStream fos = new FileOutputStream(file)) {
             for(int i = 0; i < pieceDataMap.size(); i++) {
                 byte[] temp = pieceDataMap.get(i);
