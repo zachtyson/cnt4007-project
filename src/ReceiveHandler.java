@@ -29,7 +29,7 @@ public class ReceiveHandler extends Thread{
                 }
             }
             if (hasAllPiecesCheckExit && allPeersHaveWholeFile) {
-                peerConnection.close();
+               // peerConnection.close();
                 break;
                 // System.out.println("Both peers have all pieces, closing connection");
 
@@ -52,6 +52,161 @@ public class ReceiveHandler extends Thread{
 //                        }
 //                    }
 //                }
+                if (peerConnection.getSelfChoked()){
+                    switch (interpretation.Msg) { //look at labels for choke and unchoke.
+                        //do whatever it says to do when it is choked or unchoked
+                        case choke:
+                            //todo: implement choke
+                            //choke means that you can't request pieces from the peer
+                            peerProcess.printDebug("Received choke message from peer");
+                            //implementation here
+                            //stop sending requests to this peer
+                            peerConnection.setSelfChoked(true);
+                            break;
+                        case unchoke:
+                            //todo: implement unchoke
+                            //unchoke means that you can request pieces from the peer again
+                            peerProcess.printDebug("Received unchoke message from peer");
+                            //implementation here
+                            //start sending requests to this peer
+                            peerConnection.setSelfChoked(false);
+
+                            break;
+
+                        case interested:
+                            //todo: implement interested
+                            //honestly im not even sure what to put for interested and not interested
+                            //like obviously they tell us what interested and not interested means, but I'm not sure what to do with that information
+                            peerProcess.printDebug("Received interested message from peer");
+                            peerConnection.hostProcess.logger.logReceiveInterested(String.valueOf(peerConnection.peerId));
+                            peerConnection.setPeerInterested(true);
+                            peerConnection.hostProcess.interestedNeighbors.add(peerConnection);
+                            break;
+                        case notInterested:
+                            //todo: implement not interested
+                            peerProcess.printDebug("Received not interested message from peer");
+                            peerConnection.hostProcess.logger.logReceiveNotInterested(String.valueOf(peerConnection.peerId));
+                            peerConnection.setPeerInterested(false);
+                            peerConnection.hostProcess.interestedNeighbors.remove(peerConnection);
+                            break;
+                        case have:
+                            peerProcess.printDebug("Received have message from peer");
+                            peerConnection.hostProcess.logger.logReceiveHave(String.valueOf(peerConnection.peerId), interpretation.pieceIndex);
+                            //Update bitmap to reflect that the peer has the piece
+                            peerConnection.peerPieceMap.put(interpretation.pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
+                            //If entire bitfield is Downloaded, set hasAllPieces to true
+                            boolean hasAllPiecesAfterHave = true;
+                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                if (peerConnection.peerPieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                                    //System.err.println("Peer " + peerConnection.peerId + " does not have piece " + i);
+                                    hasAllPiecesAfterHave = false;
+                                    break;
+                                }
+                            }
+                            if (hasAllPiecesAfterHave) {
+                                //System.out.println("Peer has all pieces");
+                                boolean previousValue = peerConnection.peerHasAllPieces.getAndSet(true);
+                                peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
+                                if (!previousValue) {
+                                    peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+                                    //Checking to prevent duplicate log messages
+                                }
+                            }
+                            peerConnection.setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+                            break;
+                        case request:
+                            peerProcess.printDebug("Received request message from peer");
+                            peerProcess.printDebug("Piece index: " + interpretation.pieceIndex);
+                            byte[] pieceRequested = peerConnection.hostProcess.pieceData.get(interpretation.pieceIndex);
+                            byte[] messageToPeer = Message.generatePieceMessage(pieceRequested, interpretation.pieceIndex);
+                            peerConnection.sendResponses.add(messageToPeer);
+                            break;
+                        case piece:
+                            peerProcess.printDebug("Received piece message from peer");
+
+                            //add to bytes received, this is for measuring download speed
+                            int messageLength = message.length;
+                            peerConnection.addToMessageBytesReceived(LocalDateTime.now(), messageLength);
+
+                            int pieceIndex = interpretation.pieceIndex;
+                            byte[] piece = interpretation.messagePayload;
+                            peerConnection.currentlyRequestedPiece.set(-1); //Set to -1 to indicate that no piece is currently being requested
+                            peerProcess.printDebug("Currently requested piece set to -1");
+                            peerConnection.hostProcess.pieceMap.put(pieceIndex, peerProcess.pieceStatus.DOWNLOADED);
+                            peerConnection.hostProcess.pieceData.put(pieceIndex, piece);
+                            int numPiecesLeft = 0;
+                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                if (peerConnection.hostProcess.pieceMap.get(i) == peerProcess.pieceStatus.DOWNLOADED) {
+                                    numPiecesLeft++;
+                                }
+                            }
+                            peerConnection.hostProcess.logger.logDownloadedPiece(String.valueOf(peerConnection.peerId), pieceIndex, numPiecesLeft);
+                            //send message to host process that piece has been received
+                            byte[] messageToHost = Message.generateHasPieceMessage(pieceIndex);
+                            peerProcess.printDebug("Sending message that piece " + pieceIndex + " has been received");
+                            //peerConnection.sendResponses.add(messageToHost); //dont think this is necessary
+                            for (PeerConnection peerConnection : peerConnection.hostProcess.peerConnectionVector) {
+                                peerConnection.sendResponses.add(messageToHost);
+                            }
+                            //Put messageToHost in the front of the queue
+
+                            boolean hasAllPiecesAfterReceieve = true;
+                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                if (peerConnection.hostProcess.pieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                                    hasAllPiecesAfterReceieve = false;
+                                    break;
+                                }
+                            }
+                            //TODO: THIS IS A HACKY WAY TO DO THIS, FIX THIS LATER
+                            System.out.println("I have all the pieces! " + peerConnection.hostProcess.selfPeerId);
+                            if (hasAllPiecesAfterReceieve) {
+                                boolean previousValue = peerConnection.hostProcess.hasAllPieces.getAndSet(true);
+                                if (!previousValue) {
+                                    peerConnection.hostProcess.logger.logCompletion();
+                                    byte[] bitmapMessage = Message.generateBitmapMessage(peerConnection.hostProcess.pieceMap, peerConnection.commonCfg.numPieces);
+                                    peerConnection.sendResponses.add(bitmapMessage);
+                                }
+                            }
+
+
+                            break;
+                        case bitfield:
+                            peerProcess.printDebug("Received bitfield message from peer");
+                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                int nthBit = Message.getNthBit(interpretation.messagePayload, i);
+                                if (nthBit == 1) {
+                                    peerConnection.peerPieceMap.put(i, peerProcess.pieceStatus.DOWNLOADED);
+                                }
+                            }
+                            //If entire bitfield is Downloaded, set hasAllPieces to true
+                            //Honestly not entirely familiar with the specs so not sure if a peer would ever send a bitfield if they don't have all the pieces
+                            //But I guess it's possible so it'll make this code a bit less efficient
+                            boolean hasAllPieces = true;
+                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                if (peerConnection.peerPieceMap.get(i) != peerProcess.pieceStatus.DOWNLOADED) {
+                                    hasAllPieces = false;
+                                    break;
+                                }
+                            }
+                            peerConnection.peerHasAllPieces.set(hasAllPieces);
+                            for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
+                                peerProcess.printDebug("Piece " + i + " is " + peerConnection.peerPieceMap.get(i));
+                            }
+                            if (hasAllPieces) {
+                                peerProcess.printDebug("Peer has all pieces");
+                                peerConnection.hostProcess.peerHasWholeFile.put(peerConnection.peerId, true);
+                                peerConnection.hostProcess.logger.logPeerCompletion(String.valueOf(peerConnection.peerId));
+                            }
+                            peerConnection.setSelfInterested(peerConnection.peerHasAnyPiecesWeDont());
+
+                            break;
+                        default:
+                            System.out.println("Received unknown message from peer");
+                            break;
+                    }
+
+                }else{
+
 
                     switch (interpretation.Msg) { //look at labels for choke and unchoke.
                         //do whatever it says to do when it is choked or unchoked
@@ -158,7 +313,7 @@ public class ReceiveHandler extends Thread{
                                 }
                             }
                             //TODO: THIS IS A HACKY WAY TO DO THIS, FIX THIS LATER
-                        {
+                            System.out.println("I have all the pieces! " + peerConnection.hostProcess.selfPeerId);
                             if (hasAllPiecesAfterReceieve) {
                                 boolean previousValue = peerConnection.hostProcess.hasAllPieces.getAndSet(true);
                                 if (!previousValue) {
@@ -167,9 +322,9 @@ public class ReceiveHandler extends Thread{
                                     peerConnection.sendResponses.add(bitmapMessage);
                                 }
                             }
-                        }
 
-                        break;
+
+                            break;
                         case bitfield:
                             peerProcess.printDebug("Received bitfield message from peer");
                             for (int i = 0; i < peerConnection.commonCfg.numPieces; i++) {
@@ -204,7 +359,7 @@ public class ReceiveHandler extends Thread{
                             System.out.println("Received unknown message from peer");
                             break;
                     }
-
+                }
                 } catch(IOException e){
                     //e.printStackTrace();
                     //peerProcess.printError("Connection closed");

@@ -112,6 +112,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
             activeThreads++;
         }
     }
+    System.out.println(activeThreads);
     return !(activeThreads==0);
 }
     public peerProcess(int currentPeerID) {
@@ -159,7 +160,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
             // Optionally, you can add a sleep to avoid busy waiting
 
             try {
-               Thread.sleep(1000);
+               Thread.sleep(100);
 
 
 
