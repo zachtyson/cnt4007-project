@@ -76,7 +76,7 @@ public class peerProcess {
         return new CopyOnWriteArrayList<>(unchokedPeers);
     }
     static final boolean DEBUG = true;
-    AtomicInteger activeConnections = new AtomicInteger(0);
+    Vector<Thread> childThreads = new Vector<>();
 
     public static void main(String[] args) {
         // Check for first argument
@@ -103,7 +103,15 @@ public class peerProcess {
     }
 
     public PeerLogger logger;
-
+boolean hasActiveThreads(Vector<Thread> childThreads){
+    int activeThreads = 0;
+    for (Thread thread: childThreads){
+        if(thread.isAlive()){
+            activeThreads++;
+        }
+    }
+    return !(activeThreads==0);
+}
     public peerProcess(int currentPeerID) {
         // Reads Common.cfg and PeerInfo.cfg
         chokedNeighbors = new ArrayList<PeerConnection>();
@@ -145,12 +153,12 @@ public class peerProcess {
 
             }
         },commonCfg.optimisticUnchokingInterval*1000);
-        while (activeConnections.get() > 0) {
+        while (hasActiveThreads(childThreads)) {
             // Optionally, you can add a sleep to avoid busy waiting
 
             try {
                Thread.sleep(1000);
-                printDebug("Active Connections "+activeConnections.get());
+
 
 
             } catch (InterruptedException e) {
@@ -202,7 +210,7 @@ public class peerProcess {
         for(PeerConnection peerConnection : this.peerConnectionVector) {
             if(peerConnection.client) {
                 peerConnection.start();
-                activeConnections.incrementAndGet();
+                childThreads.add(peerConnection);
                 //peerConnection.join();
             }
         }
@@ -274,7 +282,7 @@ public class peerProcess {
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
-                            hostProcess.activeConnections.incrementAndGet();
+                            //hostProcess.activeConnections.incrementAndGet();
                             peerConnection.in = new DataInputStream(socket.getInputStream());
                             peerConnection.out = new DataOutputStream(socket.getOutputStream());
                             serverWait.remove(peerConnection);
