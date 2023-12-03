@@ -51,17 +51,26 @@ public class ReceiveHandler extends Thread{
 //                        }
 //                    }
 //                }
-                switch(interpretation.Msg) {
+                switch(interpretation.Msg) { //look at labels for choke and unchoke. 
+                //do whatever it says to do when it is choked or unchoked
                     case choke:
                         //todo: implement choke
                         //choke means that you can't request pieces from the peer
                         peerProcess.printDebug("Received choke message from peer");
+                        //implementation here
+                        //stop sending requests to this peer
+                        peerConnection.setSelfChoked(true);
                         break;
                     case unchoke:
                         //todo: implement unchoke
                         //unchoke means that you can request pieces from the peer again
                         peerProcess.printDebug("Received unchoke message from peer");
+                        //implementation here
+                        //start sending requests to this peer
+                        peerConnection.setSelfChoked(false);
+                        sendRequestsToPeer(peerConnection);
                         break;
+
                     case interested:
                         //todo: implement interested
                         //honestly im not even sure what to put for interested and not interested
