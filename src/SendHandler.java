@@ -120,7 +120,7 @@ public class SendHandler extends Thread {
                     e.printStackTrace();
                 }
             }
-            else if (hasOutstandingRequest) {
+            else if ((!peerConnection.getSelfChoked())&&hasOutstandingRequest) {
                 // Send out the outstanding request
                 peerProcess.printDebug("Sending request message");
                 int pieceIndex = peerConnection.currentlyRequestedPiece.get();
