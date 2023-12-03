@@ -296,7 +296,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
-                            //hostProcess.activeConnections.incrementAndGet();
+                            hostProcess.childThreads.add(peerConnection);
                             peerConnection.in = new DataInputStream(socket.getInputStream());
                             peerConnection.out = new DataOutputStream(socket.getOutputStream());
                             serverWait.remove(peerConnection);

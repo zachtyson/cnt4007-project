@@ -131,7 +131,6 @@ public class PeerConnection extends Thread {
         }
         //peerProcess.printError("Host: " + hostProcess.selfPeerId + ", Peer " + peerId + " has " + numPiecesPeerHas + " pieces");
         close();
-
     }
 
     public void startHandlers() {
