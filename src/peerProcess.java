@@ -539,6 +539,8 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
 
                     if (min.downloadRate.get()  >x.downloadRate.get()){
                         min = x;
+                    }else if(min.downloadRate.get() == x.downloadRate.get()){
+                        min= x;
                     }
                 }else{
                     min = x;

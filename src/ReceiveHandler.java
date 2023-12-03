@@ -29,9 +29,10 @@ public class ReceiveHandler extends Thread{
                 }
             }
             if (hasAllPiecesCheckExit && allPeersHaveWholeFile) {
+                peerConnection.close();
                 break;
                 // System.out.println("Both peers have all pieces, closing connection");
-                //peerConnection.close();
+
             }
             try {
                 byte[] message = receiveMessageLength();
