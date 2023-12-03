@@ -77,7 +77,7 @@ public class peerProcess {
         // Get a snapshot of the current unchoked peers
         return new CopyOnWriteArrayList<>(unchokedPeers);
     }
-    static final boolean DEBUG = true;
+    static final boolean DEBUG = false;
     Vector<Thread> childThreads = new Vector<>();
 
     public static void main(String[] args) {
@@ -596,7 +596,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
             index = chokedNeighbors.size()-1;
         }
         if (index!=chokedNeighbors.size()) {
-            System.out.println("Index" + index);
+            //System.out.println("Index" + index);
             PeerConnection unchoke = chokedNeighbors.get(index);
             logger.logChangeOptimisticallyUnchokedNeighbor(unchoke.peerId + "" + index);
             unchoke.sendResponses.add(Message.generateUnchokeMessage());

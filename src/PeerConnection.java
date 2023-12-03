@@ -90,7 +90,7 @@ public class PeerConnection extends Thread {
         double averageDownloadRateBps = (double) totalBytesDownloaded / timeElapsedMillis;
 
         // Print the average download rate
-        System.out.println("Average download rate over the past " + pastSeconds + " seconds: " + averageDownloadRateBps + " bps");
+        //System.out.println("Average download rate over the past " + pastSeconds + " seconds: " + averageDownloadRateBps + " bps");
         hostProcess.logger.logFiveSecondDownloadRate(String.valueOf(peerId),averageDownloadRateBps);
         downloadRate.set(averageDownloadRateBps);
     }
@@ -129,7 +129,7 @@ public class PeerConnection extends Thread {
                 numPiecesPeerHas++;
             }
         }
-        peerProcess.printError("Host: " + hostProcess.selfPeerId + ", Peer " + peerId + " has " + numPiecesPeerHas + " pieces");
+        //peerProcess.printError("Host: " + hostProcess.selfPeerId + ", Peer " + peerId + " has " + numPiecesPeerHas + " pieces");
         close();
 
     }
