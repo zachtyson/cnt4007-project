@@ -1,24 +1,12 @@
 import java.io.*;
 import java.net.*;
-import java.nio.ByteBuffer;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Formatter;
-import java.util.logging.*;
-
-
 
 public class peerProcess {
     // From my understanding the first argument is the peerID, which we can see
@@ -117,17 +105,17 @@ public class peerProcess {
     }
 
     public PeerLogger logger;
-boolean hasActiveThreads(Vector<Thread> childThreads){
-    int activeThreads = 0;
-    for (Thread thread: childThreads){
-        if(thread.isAlive()){
-            activeThreads++;
-            //System.out.println(thread);
+    boolean hasActiveThreads(Vector<Thread> childThreads){
+        int activeThreads = 0;
+        for (Thread thread: childThreads){
+            if(thread.isAlive()){
+                activeThreads++;
+                //System.out.println(thread);
+            }
         }
+        //System.out.println(activeThreads);
+        return !(activeThreads==0);
     }
-    //System.out.println(activeThreads);
-    return !(activeThreads==0);
-}
     public peerProcess(int currentPeerID) {
         // Reads Common.cfg and PeerInfo.cfg
         chokedNeighbors = new ArrayList<PeerConnection>();
@@ -183,7 +171,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
             // Optionally, you can add a sleep to avoid busy waiting
 
             try {
-               Thread.sleep(100);
+                Thread.sleep(100);
 
 
 
@@ -330,7 +318,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
                     for(PeerConnection peerConnection : serverWait) {
                         if(peerConnection.peerId == peerId) {
                             peerConnection.start();
-                            //hostProcess.activeConnections.incrementAndGet();
+                            hostProcess.childThreads.add(peerConnection);
                             peerConnection.in = new DataInputStream(socket.getInputStream());
                             peerConnection.out = new DataOutputStream(socket.getOutputStream());
                             serverWait.remove(peerConnection);
@@ -418,7 +406,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
                                 pieceMap.put(i, pieceStatus.DOWNLOADED);
                             }
                             // Look for presence of file
-                            File file = new File(commonCfg.fileName);
+                            File file = new File("peer_"+selfPeerId+"/"+commonCfg.fileName);
                             if(!file.exists()) {
                                 printError("File " + commonCfg.fileName + " not found");
                                 System.exit(1);
@@ -1494,7 +1482,7 @@ class PeerLogger {
         logger = Logger.getLogger("peer_" + peerID);
         logger.setUseParentHandlers(false);
 
-        Handler fileHandler = new FileHandler("log_peer_" + peerID + ".log");
+        Handler fileHandler = new FileHandler(peerID+"/log_peer_" + peerID + ".log");
         fileHandler.setFormatter(new CustomFormatter());
         logger.addHandler(fileHandler);
         this.peerID = String.valueOf(peerID);
