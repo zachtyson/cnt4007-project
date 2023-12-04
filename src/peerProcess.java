@@ -406,7 +406,7 @@ boolean hasActiveThreads(Vector<Thread> childThreads){
                                 pieceMap.put(i, pieceStatus.DOWNLOADED);
                             }
                             // Look for presence of file
-                            File file = new File(commonCfg.fileName);
+                            File file = new File("peer_"+selfPeerId+"/"+commonCfg.fileName);
                             if(!file.exists()) {
                                 printError("File " + commonCfg.fileName + " not found");
                                 System.exit(1);
